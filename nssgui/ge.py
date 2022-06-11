@@ -15,8 +15,7 @@ __all__ = [
     'iLength',
     'iStringable',
     'iEdittable',
-    'initafter',
-    'testfunc'
+    'initafter'
 ]
 
 def check_if_instances(obj, types:list):
