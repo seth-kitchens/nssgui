@@ -6,6 +6,9 @@ __all__ = ['Radio']
 
 class Radio(GuiElement):
     def __init__(self, object_id, text, options:list[str]|dict[str,str]):
+        """
+        If options is a dict, then format is value->text, e.g. {'item1': 'Item 1', 'item2': 'Item 2'}
+        """
         self.num_options = len(options)
         self.button_keys = [] # index -> key
         super().__init__(object_id, GuiElement.layout_types.ROW)
@@ -133,4 +136,10 @@ class Radio(GuiElement):
         self.push(window)
     def reset(self):
         self.set_selected_index(0)
+    def disable_button(self, window, value):
+        key = self.v_to_k[value]
+        window[key].update(disabled=True)
+    def enable_button(self, window, value):
+        key = self.v_to_k[value]
+        window[key].update(disabled=False)
 
