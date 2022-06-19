@@ -209,7 +209,9 @@ class Dropdown(GuiElement):
     def _load(self, data):
         self.selection = data[self.object_id]
     def _pull(self, values):
-        self.selection = values[self.keys['Dropdown']]
+        selection = values[self.keys['Dropdown']]
+        if selection in self.options:
+            self.selection = selection
     def _push(self, window):
         window[self.keys['Dropdown']](self.selection)
     def _init_window(self, window):
