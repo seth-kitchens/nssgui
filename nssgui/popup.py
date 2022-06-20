@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 from nssgui.style import colors
 from nssgui.event_manager import EventManager
 from nssgui import sg as nss_sg
+from nssgui.window import WindowContext
 
 __all__ = [
     'PopupElement',
@@ -94,7 +95,7 @@ class Popup:
         self.pe(PopupElement.ge_row(cls, key, args=args, **kwargs))
         return self
 
-    def open(self, context):
+    def open(self, context:WindowContext):
         context.disable()
 
         self.false_events.append(sg.WIN_CLOSED)
@@ -109,10 +110,10 @@ class Popup:
             nss_sg.set_cursor_to_end(we)
         if self.auto_ok_secs:
             em = EventManager(true_events=self.true_events, false_events=self.false_events)
-            em.data('self', self)
+            context.data['self'] = self
             
             @em.update()
-            def uf(context):
+            def uf(context:WindowContext):
                 popup = context.data['self']
                 secs_passed = context.data['time']
                 secs_left = popup.auto_ok_secs - secs_passed
