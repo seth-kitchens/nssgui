@@ -8,23 +8,9 @@ __all__ = [
     'browse_files',
     'MenuBar',
     'EmbedText',
-    'center_window'
+    'center_window',
+    'set_cursor_to_end'
 ]
-
-def get_widget_hex_color(w, knwon_system_color):
-    rgb = w.winfo_rgb(knwon_system_color)
-    r,g,b=[x>>8 for x in rgb]
-    return '#{:02x}{:02x}{:02x}'.format(r,g,b)
-
-def desaturate(s_color, n=0.5):
-    r = int(s_color[1:3], 16)
-    g = int(s_color[3:5], 16)
-    b = int(s_color[5:7], 16)
-    avg = int((r + g + b) / 3)
-    r = int(r - ((r - avg) * n))
-    g = int(g - ((g - avg) * n))
-    b = int(b - ((b - avg) * n))
-    return '#{:02x}{:02x}{:02x}'.format(r,g,b)
 
 taskbar_height = 50
 def center_window(window:sg.Window):

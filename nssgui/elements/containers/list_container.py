@@ -11,7 +11,7 @@ class ListContainer(GuiElement, ABC):
     def __init__(self, ge:GuiElement, layout_type) -> None:
         check_if_instances(ge, [GuiElement, iLength])
         self.ge = ge
-        self.contained_object_id = ge.get_object_id()
+        self.contained_object_id = ge.object_id
         object_id = 'ListContainer(' + self.contained_object_id + ')'
         super().__init__(object_id, layout_type)
         self.gem.add_ge(ge)

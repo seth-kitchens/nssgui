@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 import time
 from functools import wraps
@@ -26,34 +27,6 @@ def check_if_subclasses(name, types:list):
     for t in types:
         if not issubclass(name, t):
             raise TypeError('Obj ' + str(name) + ' is not a subclass of ' + str(t))
-
-"""
-Partially Implemented
-Implemented somewhat, but not (yet?) as interface/subclass/baseclass+gem/etc
-
-self.disabled
-    in GuiElement:
-        __init__(): self.disabled = False
-        save(): not called if self.disabled, instead None is saved to data[self.object_id]
-        pull(): not called if self.disabled
-
-    load(): ensure loading None sets appropriate value
-    push(): update relevant disabled values. if desired, set displayed values to blank when disabled
-s
-iValid
-    in GuiElement:
-        __init__(): has_validity = False
-    __init__(): validity defining parameters, e.g. negative_invalid
-    push_validity(): change window values/colors/etc based on if self is valid
-    is_valid(): return whether object is valid with current values. call before or after modifying object's values
-    reset_value(): set the objects values to some default, call when trying to set object's values to invalid
-    get_layout()/etc: enable_events so validity colors are updated
-    handle_event(): add events where pull() then push_validity()
-    save(): save as None if not valid
-    load(): ensure loading None sets appropriate value
-    push(): if desired, set displayed valued to blank when invalid
-
-"""
 
 class iLength(ABC):
     @abstractmethod
@@ -102,6 +75,8 @@ class GuiElementManager:
         GuiElementManager.num_gems += 1
         self.ges = {}
         self.gem_keys = {}
+
+        self.status_bar_key = None
     def __getitem__(self, key):
         return self.ges[key]
     def __setitem__(self, key, value):
@@ -199,7 +174,7 @@ class GuiElement(ABC):
         return self._get_sge()
     
     def _get_row(self):
-        raise NotImplemented
+        raise NotImplementedError
     @initafter
     def get_row(self): # A list of sg elements
         if self.layout_type == GuiElement.layout_types.LAYOUT:
@@ -209,7 +184,7 @@ class GuiElement(ABC):
         return self._get_row()
     
     def _get_layout(self):
-        raise NotImplemented
+        raise NotImplementedError
     @initafter
     def get_layout(self): # A list of lists of sg elements
         if self.layout_type == GuiElement.layout_types.SGE:
@@ -371,8 +346,6 @@ class GuiElement(ABC):
             menu = menu[arg]
         return menu.get_event_key()
 
-        
-    def get_object_id(self): return self.object_id
     def add_key(self, key_prefix):
         self.keys[key_prefix] = GuiElement.make_key(key_prefix, self.object_id)
     def add_keys(self, key_prefixes):

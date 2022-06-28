@@ -191,4 +191,5 @@ class VFSEntry:
         return self.size
     
     def calc_all(self):
+        """Meant to be overridden with subclass-specific calculated variables"""
         self.calc_size()

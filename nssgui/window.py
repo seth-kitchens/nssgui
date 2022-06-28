@@ -4,6 +4,7 @@ import PySimpleGUI as sg
 from nssgui.style import colors
 from nssgui.event_manager import EventManager
 from nssgui.ge import *
+from nssgui.elements.output.simple import StatusBar
 from nssgui import sg as nss_sg
 
 __all__ = [
@@ -87,6 +88,9 @@ class AbstractWindow(ABC):
         # After layout definition
         self.em = EventManager()
         self.define_events()
+
+        self.window:sg.Window = None
+        self.status_bar_key = None
     
     # Layout
     
@@ -151,13 +155,25 @@ class AbstractWindow(ABC):
         """Open an async loading window that will automatically\n
         be closed when a Window of the caller's class is opened."""
         k = 'LoadingWindow' + cls.__name__
-        context.add_async(LoadingWindow(k, title=title))
-        context.asyncs[k].open(context)
+        LoadingWindow(k, title=title).open(context)
     @classmethod
     def _close_loading_window(cls, context):
+        """Check for and close any loading windows opened for the class"""
         k = 'LoadingWindow' + cls.__name__
         if k in context.asyncs:
             context.asyncs[k].close(context)
+    
+    def status_bar(self, ge:StatusBar):
+        """Links a ge element to the update_status_bar() function.
+        Placing a [sg.Sizer(0, 10)] row above a status bar is suggested."""
+        self.status_bar_key = ge.object_id
+        self.gem.add_ge(ge)
+        return ge.get_row()
+    def update_status_bar(self, text):
+        if self.status_bar_key == None:
+            raise RuntimeError('StatusBar has not been specified.')
+        self.gem[self.status_bar_key].update(self.window, text)
+        self.window.refresh()
 
 class AbstractBlockingWindow(AbstractWindow):
     """
@@ -177,7 +193,6 @@ class AbstractBlockingWindow(AbstractWindow):
         self.focus_type = focus_type
     
     def open(self, context=None):
-        """Returns upon"""
         context = context if context != None else WindowContext()
         layout = self.get_layout()
 
@@ -188,10 +203,11 @@ class AbstractBlockingWindow(AbstractWindow):
 
         self.load(self.data)
         super().open(context)
-        context.push(sg.Window(self.title, layout, finalize=True))
+        self.window = sg.Window(self.title, layout, finalize=True)
+        context.push(self.window)
         context.focus()
-        self.init_window(context.window)
-        nss_sg.center_window(context.window)
+        self.init_window(self.window)
+        nss_sg.center_window(self.window)
         rv = self.em.event_loop(context)
         if rv:
             if context.values:
@@ -217,7 +233,6 @@ class AbstractAsyncWindow(AbstractWindow):
         self.focus_type = focus_type
         self.window_kwargs = window_kwargs if window_kwargs != None else {}
         super().__init__(title=title, data=data)
-        self.window = None
     def add_key(self, key_prefix):
         self.keys[key_prefix] = key_prefix + self.window_id
     def open(self, context):
