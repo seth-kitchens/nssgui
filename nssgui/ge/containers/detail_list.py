@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 import re
 
 import PySimpleGUI as sg
-from nssgui.event_manager import EventManager
 from nssgui.ge.gui_element import *
 from nssgui.popup import popups
 from nssgui.data.ordered_dict import OrderedDict
