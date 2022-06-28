@@ -1,7 +1,6 @@
 from . import g
-from . import elements as el
 from . import sg
-from .ge import *
+from . import ge
 from .window import *
 from .popup import *
 from .data import *

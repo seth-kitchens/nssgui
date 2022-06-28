@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 import PySimpleGUI as sg
 from nssgui.style import colors
 from nssgui.event_manager import EventManager
-from nssgui.ge import *
-from nssgui.elements.output.simple import StatusBar
+from nssgui.ge.gui_element import *
+from nssgui.ge.output.simple import StatusBar
 from nssgui import sg as nss_sg
 
 __all__ = [
