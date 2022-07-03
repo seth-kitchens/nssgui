@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import re
 
 import PySimpleGUI as sg
-from nssgui.event_manager import WRC
+from nssgui.event_handling import WRC
 from nssgui.ge.gui_element import *
 from nssgui.popup import popups
 from nssgui.data.ordered_dict import OrderedDict
@@ -187,7 +187,9 @@ class DetailList(GuiElement, iLength, ABC):
                 return
             item = self.selection
             data = self.item_dict[item]
-            data = self.edit_data(context, item, data)
+            rv, data = self.edit_data(context, item, data)
+            if not rv.success():
+                return
             self.item_dict[item] = data
             self.push(context.window)
         
@@ -240,7 +242,7 @@ class DetailList(GuiElement, iLength, ABC):
                 popups.ok(context, 'Entry of name "' + item + '" already exists.', title='Entry Exists')
                 return
             rv, data = self.edit_data(context, item, None)
-            if rv.check_success():
+            if not rv.check_success():
                 return rv
             self.item_dict[item] = data
             self.selection = item

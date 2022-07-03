@@ -5,7 +5,7 @@ from functools import wraps
 
 import PySimpleGUI as sg
 from nssgui import g as nss_g
-from nssgui.event_manager import WRC, EventManager, EventLoop
+from nssgui.event_handling import WRC, EventManager, EventLoop
 from nssgui.sg.utils import MenuDict
 
 __all__ = [
@@ -259,7 +259,7 @@ class GuiElement(ABC, EventManager):
     ## Virtuals
 
     def handle_event(self, context):
-        rv = WRC(super().handle_event(context))
+        rv = WRC(EventManager.handle_event(self, context))
         if rv.check_close():
             return rv
         rv |= WRC(self.gem.handle_event(context))

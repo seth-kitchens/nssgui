@@ -1,6 +1,4 @@
 import PySimpleGUI as sg
-import tkinter as tk
-import copy
 
 # Wrapped 
 

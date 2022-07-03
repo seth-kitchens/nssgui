@@ -115,6 +115,7 @@ class VFSExplorerView(GuiElement):
         pass
     def _push(self, window):
         self.update_rcm(window)
+        self.vfs_explorer.refresh_current_dir()
         if self.selection:
             entry_details = self.get_entry_details(self.selection)
         else:

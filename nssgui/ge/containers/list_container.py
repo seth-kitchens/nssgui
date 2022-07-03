@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import PySimpleGUI as sg
-from nssgui.event_manager import WRC
+from nssgui.event_handling import WRC
 from nssgui.window import AbstractBlockingWindow
 from nssgui.ge.gui_element import *
 
@@ -55,8 +55,8 @@ class ListContainer(GuiElement, ABC):
         def define_events(self):
             super().define_events()
             self.event_handler(self.contained.handle_event)
-            self.event_value_close_save('Ok')
-            self.event_value_close_discard(sg.WIN_CLOSED)
+            self.event_value_close_success('Ok')
+            self.event_value_close(sg.WIN_CLOSED)
     
     def define_events(self):
         super().define_events()
@@ -64,7 +64,7 @@ class ListContainer(GuiElement, ABC):
         def event_edit(context):
             window_edit = ListContainer.WindowEditContained('Edit', self.ge)
             rv = window_edit.open(context)
-            if not rv:
+            if not rv.check_success():
                 return
             self.load(window_edit.get_data())
             self.push(context.window)

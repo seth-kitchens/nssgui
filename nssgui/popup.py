@@ -5,7 +5,7 @@ from typing import Iterable
 
 import PySimpleGUI as sg
 from nssgui.style import colors
-from nssgui.event_manager import NULL_EVENT, EventManager, EventLoop, WRC
+from nssgui.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
 from nssgui import sg as nss_sg
 from nssgui.window import WindowContext
 
@@ -37,8 +37,9 @@ class PopupElement:
     def ge_row(cls, key=None, args=None, **kwargs):
         return PopupElement(cls, PopupElement.GE_ROW, key=key, args=args, **kwargs)
 
-class Popup:
+class Popup(EventManager):
     def __init__(self):
+        super().__init__(debug_id='Popup')
         self.title = None
         self.auto_ok_text = None
         self.auto_ok_secs = None
@@ -98,7 +99,9 @@ class Popup:
     def open(self, context:WindowContext) -> WRC:
         context.disable()
 
-        self.false_events.append(sg.WIN_CLOSED)
+        self.event_value_close(sg.WIN_CLOSED)
+        self.event_value_close_success(*self.true_events)
+        self.event_value_close(*self.false_events)
 
         layout = self.get_layout()
         title = self.title if self.title else ''
@@ -108,10 +111,7 @@ class Popup:
             we = context.window[self.init_focus]
             we.set_focus()
             nss_sg.set_cursor_to_end(we)
-        em = EventManager(debug_id='Popup' + str(self.title))
-        em.event_value_close_save(*self.true_events)
-        em.event_value_close_discard(*self.false_events)
-        event_loop = EventLoop(em)
+        event_loop = EventLoop(self)
         if self.auto_ok_secs:
             context.data['self'] = self
             
@@ -239,10 +239,11 @@ class PopupBuilder:
     
     # Events
 
-    def true_event(self, key):
-        self.popup.true_events.append(key)
-    def false_event(self, key):
-        self.popup.false_events.append(key)
+    def event_save_close(self, key):
+        self.popup.event_value_close_success(key)
+
+    def event_close(self, key):
+        self.popup.event_value_close(key)
     
     # Finalizers
     
@@ -330,12 +331,12 @@ class popups:
             for key, text in options.items():
                 pe = PopupElement.sge(sg.Button, key=key, button_text=text, **button_kwargs)
                 pb.pe(pe)
-                pb.true_event(key)
+                pb.event_save_close(key)
         else:
             for text in options:
                 pe = PopupElement.sge(sg.Button, key=text, button_text=text, **button_kwargs)
                 pb.pe(pe)
-                pb.true_event(text)
+                pb.event_save_close(text)
         pb.pe(PopupElement.sge(sg.Push))
 
         rv = pb.open(context)

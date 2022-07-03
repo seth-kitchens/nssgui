@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import PySimpleGUI as sg
 from nssgui.style import colors
-from nssgui.event_manager import NULL_EVENT, EventManager, EventLoop, WRC
+from nssgui.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
 from nssgui.ge.gui_element import *
 from nssgui.ge.output import StatusBar
 from nssgui import sg as nss_sg
@@ -207,7 +207,7 @@ class AbstractBlockingWindow(AbstractWindow):
         context.focus()
         self.init_window(self.window)
         nss_sg.center_window(self.window)
-        rv = WRC(EventLoop(self).run(context))
+        rv = EventLoop(self).run(context)
         rv.closed_window()
 
         if rv.check_success():
