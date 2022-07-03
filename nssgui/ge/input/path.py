@@ -70,7 +70,7 @@ class Path(GuiElement):
     
     def define_events(self):
         super().define_events()
-        @self.event(self.keys['Path'])
+        @self.eventmethod(self.keys['Path'])
         def event_path(context):
             self.push_validity('Path')
 

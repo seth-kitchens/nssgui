@@ -68,7 +68,7 @@ class Input(GuiElement):
     
     def define_events(self):
         super().define_events()
-        @self.event(self.keys['In'])
+        @self.eventmethod(self.keys['In'])
         def event_in(context):
             self.pull(context.values)
             self.push_validity(context.window)

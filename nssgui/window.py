@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import PySimpleGUI as sg
 from nssgui.style import colors
-from nssgui.event_manager import EventManager
+from nssgui.event_manager import NULL_EVENT, EventManager, EventLoop, WRC
 from nssgui.ge.gui_element import *
 from nssgui.ge.output import StatusBar
 from nssgui import sg as nss_sg
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 class WindowContext:
-    def __init__(self, window=None, event=None, values=None, data=None):
+    def __init__(self, window=None, event=NULL_EVENT, values=None, data=None):
         self.window:sg.Window = window
         self.event:str = event
         self.values:dict = values if values != None else {}
@@ -25,6 +25,8 @@ class WindowContext:
         self.window_stack:list[sg.Window] = []
         self.async_windows:dict[str,AbstractAsyncWindow] = {}
         self.asyncs = self.async_windows
+
+
     
     def push(self, window:sg.Window):
         self.window_stack.append(self.window)
@@ -33,6 +35,8 @@ class WindowContext:
     def pop(self):
         w = self.window
         self.window = self.window_stack.pop()
+        self.event = NULL_EVENT
+        self.values = {}
         return w
     
     def add_async(self, asyncwindow):
@@ -70,8 +74,9 @@ class WindowContext:
             return
         self.window.un_hide()
 
-class AbstractWindow(ABC):
+class AbstractWindow(ABC, EventManager):
     def __init__(self, title, data=None) -> None:
+        super().__init__(debug_id='AbstractWindow:{}'.format(title))
         self.title = title
         self.data = data.copy() if data != None else {}
         self.gem = GuiElementManager()
@@ -86,7 +91,6 @@ class AbstractWindow(ABC):
         self.get_layout() # trash a layout to create the GuiElements defined in it
 
         # After layout definition
-        self.em = EventManager()
         self.define_events()
 
         self.window:sg.Window = None
@@ -106,7 +110,7 @@ class AbstractWindow(ABC):
     def define_events(self):
         """AbstractWindow:define_events()
             Adds only: gem handle_event function"""
-        self.em.handle_event_function(self.gem.handle_event)
+        self.event_handler(self.gem.handle_event)
 
     # Data
 
@@ -145,11 +149,6 @@ class AbstractWindow(ABC):
             menu = menu[arg]
         return menu.get_event_key()
     
-    def event(self, key):
-        return self.em.event(key)
-    def events(self, keys):
-        return self.em.events(keys)
-    
     @classmethod
     def open_loading_window(cls, context, title=''):
         """Open an async loading window that will automatically\n
@@ -167,8 +166,7 @@ class AbstractWindow(ABC):
         """Links a ge element to the update_status_bar() function.
         Placing a [sg.Sizer(0, 10)] row above a status bar is suggested."""
         self.status_bar_key = ge.object_id
-        self.gem.add_ge(ge)
-        return ge.get_row()
+        return self.gem.row(ge)
     def update_status_bar(self, text):
         if self.status_bar_key == None:
             raise RuntimeError('StatusBar has not been specified.')
@@ -193,6 +191,7 @@ class AbstractBlockingWindow(AbstractWindow):
         self.focus_type = focus_type
     
     def open(self, context=None):
+        """Open a blocking window. Returns after closing."""
         context = context if context != None else WindowContext()
         layout = self.get_layout()
 
@@ -208,8 +207,10 @@ class AbstractBlockingWindow(AbstractWindow):
         context.focus()
         self.init_window(self.window)
         nss_sg.center_window(self.window)
-        rv = self.em.event_loop(context)
-        if rv:
+        rv = WRC(EventLoop(self).run(context))
+        rv.closed_window()
+
+        if rv.check_success():
             if context.values:
                 self.pull(context.values)
             self.save(self.data)
@@ -235,7 +236,7 @@ class AbstractAsyncWindow(AbstractWindow):
         super().__init__(title=title, data=data)
     def add_key(self, key_prefix):
         self.keys[key_prefix] = key_prefix + self.window_id
-    def open(self, context):
+    def open(self, context:WindowContext):
         super().open(context)
         if self.window:
             return
@@ -247,7 +248,7 @@ class AbstractAsyncWindow(AbstractWindow):
         self.window = sg.Window(**kwargs)
         context.add_async(self)
         self.window.refresh()
-    def close(self, context):
+    def close(self, context:WindowContext):
         if not self.window:
             return
         self.window.close()

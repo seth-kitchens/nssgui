@@ -1,165 +1,345 @@
+from __future__ import annotations
 import time
-from typing import Callable, Iterable
+import inspect
+import PySimpleGUI as sg
+
+__all__ = [
+    'EventManager',
+    'EventLoop',
+    'WindowReturnCode',
+    'WRC',
+    'NULL_EVENT'
+]
+
+NULL_EVENT = 'NULL_EVENT'
+
+def get_func_location(func):
+        file = inspect.getfile(func)
+        try:
+            _, lineno = inspect.getsourcelines(func)
+        except OSError:
+            lineno = -1
+        return file, lineno
+
+class Callback:
+    def __init__(self):
+        self.func:function = None
+        self.dbginfo:list = []
+    def dbg_location(self, file, lineno):
+        location = 'Callback defined at "{}":{}'.format(file, lineno)
+        self.dbginfo.append(location)
+    def get_info(self):
+        return 'Callback:\n    ' + '\n    '.join(self.dbginfo)
+
+
+    @classmethod
+    def event(cls, func):
+        cb = cls()
+        cb.func = func
+        file, lineno = get_func_location(func)
+        cb.dbg_location(file, lineno)
+        return cb
+    event_handler = event
+    @classmethod
+    def event_value(cls, value):
+        cb = cls()
+        cb.func = lambda context : value
+        frame = inspect.currentframe()
+        frameinfos = inspect.getouterframes(frame)
+        frameinfo = frameinfos[3]
+        del frame
+        cb.dbg_location(frameinfo.filename, frameinfo.lineno)
+        return cb
+
+
+
+class WindowReturnCode:
+    NONE = 0
+    EXIT = 1 << 0
+    CLOSE = 1 << 1
+    SUCCESS = 1 << 2
+
+    _MIN = 0
+    _MAX = SUCCESS
+    _SUM = _MAX * 2 - 1
+
+
+    def __init__(self, value:WindowReturnCode|int|None=NONE, dbginfo=None):
+        self.value = self.NONE
+        self.dbginfo = dbginfo
+        self |= value
+
+    def __ior__(self, other:WindowReturnCode|int|None):
+        if isinstance(other, self.__class__):
+            self.check_valid_int(other.value)
+            self.value |= other.value
+        elif isinstance(other, int):
+            self.check_valid_int(other)
+            self.value |= other
+        else:
+            self.value = self.NONE
+        self.propagate()
+        return self
+    
+
+    def propagate(self):
+        """Flip additional flags automatically based on current flags flipped."""
+        if self.value & self.EXIT:
+            self.value |= self.CLOSE
+
+    
+    @classmethod
+    def none(cls):
+        return WRC(WRC.NONE)
+
+    
+    @classmethod
+    def exit(cls):
+        return WRC(WRC.EXIT)
+
+
+    @classmethod
+    def close(cls):
+        return WRC(WRC.CLOSE)
+
+    
+    @classmethod
+    def success(cls):
+        return WRC(WRC.SUCCESS)
+
+    
+    def check_none(self):    return bool(self.value == self.NONE)
+    def check_exit(self):    return bool(self.value &  self.EXIT)
+    def check_close(self):   return bool(self.value &  self.CLOSE)
+    def check_success(self): return bool(self.value &  self.SUCCESS)
+
+    def __str__(self):
+        flags = []
+        if self.check_none():
+            flags.append('NONE')
+        else:
+            if self.check_exit():
+                flags.append('EXIT')
+            if self.check_close():
+                flags.append('CLOSE')
+            if self.check_success():
+                flags.append('SUCCESS')
+        return ' | '.join(flags)
+    
+    @classmethod
+    def check_valid_int(cls, v:int, info=None) -> int:
+        """Verify that 'v' is a valid WRC value. Returns v, converting to WRC.NONE if None"""
+        info = '\nDebug info: {}'.format(info) if info != None else ''
+        if not isinstance(v, int):
+            raise ValueError('Value is not an int' + info)
+        if v < cls._MIN:
+            raise ValueError('Value too small' + info)
+        if v > cls._SUM:
+            raise ValueError('Value too large' + info)
+    
+    def closed_window(self):
+        if self.check_exit():
+            return
+        if self.check_close():
+            self.clear(self.CLOSE)
+        self.propagate()
+    
+    def clear(self, *flags):
+        for flag in flags:
+            self.value = self.value & ~flag
+        self.propagate()
+
+WRC = WindowReturnCode
+
 
 class EventManager:
-    def __init__(self, event_data=None, true_events=None, false_events=None, events:list[tuple[str, Callable]]=None):
-        self.handle_event_funcs = []
-        self._bool_events = {}
-        self.event_funcs = {}
-        self.update_functions = []
-        self.init_window_functions = []
-        self.save_functions = []
-        self.load_functions = []
-        self.pull_functions = []
-        self.push_functions = []
-        self.keys = {}
-        self.final_event = None
-        self.final_values = None
-        if true_events:
-            for e in true_events:
-                self.true_event(e)
-        if false_events:
-            for e in false_events:
-                self.false_event(e)
-        if events:
-            for e, func in events:
-                self.event_function(e, func)
+    def __init__(self, debug_id:str=None):
+        self._callbacks_event_handlers:list[Callback] = []
+        self._callbacks_event:dict[str, Callback] = {}
+        self.debug_id = debug_id
     
-    def event_handler(self):
-        def wrap(f):
-            self.handle_event_function(f)
-            return f
-        return wrap
-    def handle_event_function(self, func):
-        """func(context)"""
-        self.handle_event_funcs.append(func)
-        return self
+    def copy(self):
+        em = EventManager(self.debug_id)
+        em._callbacks_event_handlers = self._callbacks_event_handlers.copy()
+        em._callbacks_event = self._callbacks_event.copy()
+        return em
     
-    def update(self):
-        def wrap(f):
-            self.update_function(f)
-            return f
-        return wrap
-    def update_function(self, func):
-        """func(context)"""
-        self.update_functions.append(func)
-        return self
-    
-    def event(self, event):
-        """Decorator for adding event. Can be used in succession"""
-        def wrap(f):
-            self.event_function(event, f)
-            return f
-        return wrap
-    def event_function(self, event, func):
-        """func(context)"""
-        # print('binding event func', event)
-        self.event_funcs[event] = func
-    
-    def events(self, events:Iterable):
-        """Decorator for adding events. Alternative to using event() in succession."""
-        def wrap(f):
-            self.event_functions(events, f)
-            return f
-        return wrap
-    def event_functions(self, events, func):
-        """func(context)"""
+
+    ###
+
+
+    def event_method(self, func, *events):
+        """func: func(WindowContext)"""
+        callback = Callback.event(func)
         for event in events:
-            self.event_funcs[event] = func
+            self._callbacks_event[event] = callback
     
-    def append(self, prev_event, event):
-        f = self.event_funcs[prev_event]
-        self.event_function(event, f)
+
+    def event_handler(self, func):
+        callback = Callback.event_handler(func)
+        self._callbacks_event_handlers.append(callback)
     
-    def true_event(self, event):
-        self._bool_events[event] = True
-        return self
-    def false_event(self, event):
-        self._bool_events[event] = False
-        return self
-    def bool_events(self, true_events=None, false_events=None):
-        if true_events:
-            for event in true_events:
-                self._bool_events[event] = True
-        if false_events:
-            for event in false_events:
-                self._bool_events[event] = False
-        return self
+
+    def event_value(self, value:int, *events):
+        callback = Callback.event_value(value)
+        for event in events:
+            self._callbacks_event[event] = callback
     
-    def save_function(self, func, data):
+
+    ###
+    
+
+    def eventmethod(self, *events):
+        """
+        Decorator for adding event(s).
+        \n
+        @self.eventmethodmethod('event_key')\n
+        def event_func(context):\n
+            ...\n
+        \n
+        Or,\n
+        @self.eventmethodmethod('event_key1', 'event_key2')\n
+        def event_func(context):\n
+            ..."""
+        def wrap(f):
+            self.event_method(f, *events)
+            return f
+        return wrap
+    
+    
+    def eventhandler(self):
+        def wrap(f):
+            self.event_handler(f)
+            return f
+        return wrap
+
+
+    ###
+
+
+    def event_value_close_success(self, *events):   self.event_value(WRC.CLOSE | WRC.SUCCESS,    *events)
+    def event_value_close_save(self, *events):      self.event_value(WRC.CLOSE | WRC.SUCCESS,    *events)
+    def event_value_close_failure(self, *events):   self.event_value(WRC.CLOSE,                  *events)
+    def event_value_close_discard(self, *events):   self.event_value(WRC.CLOSE,                  *events)
+    def event_value_exit(self, *events):            self.event_value(WRC.EXIT,                   *events)
+
+
+    ###
+    
+
+    def handle_event(self, context) -> WRC:
+        for callback in self._callbacks_event_handlers:
+            rv = WRC(callback.func(context), 'EventHandler ' + callback.get_info())
+            if rv.check_close():
+                return rv
+        if context.event in self._callbacks_event.keys():
+            callback = self._callbacks_event[context.event]
+            rv = WRC(callback.func(context), 'Event ' + callback.get_info())
+            if rv.check_close():
+                return rv
+        return WRC()
+    
+    
+
+class EventLoop:
+    def __init__(self, em:EventManager=None):
+        self.em = em.copy()
+        self.em.debug_id = 'EventLoop' + self.em.debug_id
+        self._callbacks_update = []
+        self._callbacks_init_window = []
+        self._callbacks_save = []
+        self._callbacks_load = []
+        self._callbacks_pull = []
+        self._callbacks_push = []
+        self.final_event = 'NoEvent'
+        self.final_values = None
+    
+
+    def updatecallback(self):
+        def wrap(f):
+            self._callbacks_update.append(f)
+            return f
+        return wrap
+    
+
+    def savecallback(self, func, data):
         """func(data)"""
         def f():
             func(data)
-        self.save_functions.append(f)
+        self._callbacks_save.append(f)
         return self
-    def load_function(self, func, data):
+    
+
+    def loadcallback(self, func, data):
         """func(data)"""
         def f():
             func(data)
-        self.load_functions.append(f)
+        self._callbacks_load.append(f)
         return self
-    def pull_function(self, func):
+
+    
+    def pullcallback(self, func):
         """func(values)"""
-        self.pull_functions.append(func)
+        self._callbacks_pull.append(func)
         return self
-    def push_function(self, func):
+
+
+    def pushcallback(self, func):
         """func(window)"""
-        self.push_functions.append(func)
+        self._callbacks_push.append(func)
         return self
-    def init_window_function(self, func):
+
+
+    def initwindowcallback(self, func):
         """func(window)"""
-        self.init_window_functions.append(func)
+        self._callbacks_init_window.append(func)
         return self
     
-    def handle_event(self, context):
-        #print('DBG handle_event() start, event:', context.event, ', event_funcs:', self.event_funcs.keys())
-        if context.event in self._bool_events.keys():
-            #print('DBG em.handle_event(): event handled as bool')
-            return self._bool_events[context.event]
-        for func in self.handle_event_funcs:
-            #print('DBG em.handle_event(): handing event to other handler')
-            func(context)
-        if context.event in self.event_funcs.keys():
-            #print('DBG em.handle_event(): event handled by event func')
-            return self.event_funcs[context.event](context)
-        #print('DBG em.handle_event(): event not handled')
-        return None
-    
-    def event_loop(self, context, read_time=None):
-        """Exits immediately when a non-None value is returned from any
-        handle-event function or update function. Returns the non-None value.
-        Calls all pull and save functions if bool(returned value) == True.
+
+    def run(self, context, read_time=None) -> WRC:
+        """Calls all pull and save functions if bool(returned value) == True.
         Saves the final event/values in 'final_event' and 'final_values' member variables"""
         start_time = time.time()
-        for func in self.load_functions:
-            func()
-        for func in self.init_window_functions:
-            func(context.window)
-        for func in self.push_functions:
-            func(context.window)
-        rv = None
+        for cb in self._callbacks_load:
+            cb()
+        for cb in self._callbacks_init_window:
+            cb(context._window)
+        for cb in self._callbacks_push:
+            cb(context.window)
+        rv = WRC()
+        is_win_closed = False
         while True:
             if read_time != None and read_time <= 0:
                 context.event, context.values = context.window.read()
             else:
                 context.event, context.values, = context.window.read(read_time)
-            # print('values:', context.values)
+            if context.event == sg.WIN_CLOSED:
+                is_win_closed = True
             context.data['time'] = time.time() - start_time
-            for uf in self.update_functions:
-                if (rv := uf(context)) != None:
+            for uf in self._callbacks_update:
+                rv = WRC(uf(context))
+                if rv.check_close():
                     break
-            if rv != None:
+            if rv.check_close():
                 break
-            if (rv := self.handle_event(context)) != None:
+            rv = WRC(self.em.handle_event(context))
+            if rv.check_close():
+                break
+            if is_win_closed:
+                print('Failed to catch WIN_CLOSED event.')
+                print('Events: {}'.format(self.em._callbacks_event))
+                print('EventHandlers: {}'.format(self.em._callbacks_event_handlers))
                 break
         context.window.close()
-        if rv:
-            for pull_function in self.pull_functions:
-                pull_function(context.values)
-            for save_function in self.save_functions:
-                save_function()
+        if rv.check_success():
+            for cb in self._callbacks_pull:
+                cb(context.values)
+            for cb in self._callbacks_save:
+                cb()
         self.final_event = context.event
         self.final_values = context.values.copy() if context.values != None else None
         return rv
-    def timed_event_loop(self, context):
-        self.event_loop(context, read_time=50)
+    
+
+    def run_timed(self, context) -> WRC:
+        return self.run(context, read_time=50)

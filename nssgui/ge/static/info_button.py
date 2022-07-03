@@ -45,7 +45,7 @@ class InfoButton(GuiElement):
     
     def define_events(self):
         super().define_events()
-        @self.event(self.keys['Info'])
+        @self.eventmethod(self.keys['Info'])
         def event_info(context):
             self.info_popup(context)
 

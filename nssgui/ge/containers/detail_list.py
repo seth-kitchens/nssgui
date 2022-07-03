@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import re
 
 import PySimpleGUI as sg
+from nssgui.event_manager import WRC
 from nssgui.ge.gui_element import *
 from nssgui.popup import popups
 from nssgui.data.ordered_dict import OrderedDict
@@ -158,7 +159,7 @@ class DetailList(GuiElement, iLength, ABC):
     def define_events(self):
         super().define_events()
         
-        @self.event(self.keys['Listbox'])
+        @self.eventmethod(self.keys['Listbox'])
         def event_listbox(context):
             sge_listbox = context.window[self.keys['Listbox']]
             is_double_click = (not sge_listbox.is_right_click()) and self.check_double_click('Listbox')
@@ -173,14 +174,14 @@ class DetailList(GuiElement, iLength, ABC):
             self.update_details(context.window)
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxItem', 'Deselect'))
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Deselect'))
         def event_deselect(context):
             self.selection = None
             self.update_details(context.window)
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxItem', 'Edit'))
-        @self.event(self.keys['Edit'])
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Edit'))
+        @self.eventmethod(self.keys['Edit'])
         def event_edit(context):
             if not self.selection:
                 return
@@ -190,8 +191,8 @@ class DetailList(GuiElement, iLength, ABC):
             self.item_dict[item] = data
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxItem', 'Rename'))
-        @self.event(self.keys['Rename'])
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Rename'))
+        @self.eventmethod(self.keys['Rename'])
         def event_rename(context):
             if not self.selection:
                 return
@@ -209,8 +210,8 @@ class DetailList(GuiElement, iLength, ABC):
             self.selection = item
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxItem', 'Remove'))
-        @self.event(self.keys['Remove'])
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Remove'))
+        @self.eventmethod(self.keys['Remove'])
         def event_remove(context):
             if not self.selection:
                 return
@@ -218,8 +219,8 @@ class DetailList(GuiElement, iLength, ABC):
             self.selection = None
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxItem', 'Clone'))
-        @self.event(self.keys['Clone'])
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Clone'))
+        @self.eventmethod(self.keys['Clone'])
         def event_clone(context):
             if not self.selection:
                 return
@@ -228,8 +229,8 @@ class DetailList(GuiElement, iLength, ABC):
             self.item_dict.insert_after_key(self.selection, item, data)
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxNone', 'Add'))
-        @self.event(self.keys['Add'])
+        @self.eventmethod(self.key_rcm('ListboxNone', 'Add'))
+        @self.eventmethod(self.keys['Add'])
         def event_add(context):
             item = popups.edit_string(context, '', label='Name:', title='Add')
             item = item.lstrip(self.lstrip).rstrip(self.rstrip)
@@ -238,14 +239,15 @@ class DetailList(GuiElement, iLength, ABC):
             if item in self.item_dict.key_list:
                 popups.ok(context, 'Entry of name "' + item + '" already exists.', title='Entry Exists')
                 return
-            data = self.edit_data(context, item, None)
-            if not data:
-                return
+            rv, data = self.edit_data(context, item, None)
+            if rv.check_success():
+                return rv
             self.item_dict[item] = data
             self.selection = item
             self.push(context.window)
+            return rv
         
-        @self.event(self.keys['RemoveAll'])
+        @self.eventmethod(self.keys['RemoveAll'])
         def event_remove_all(context):
             if not len(self):
                 return
@@ -255,28 +257,28 @@ class DetailList(GuiElement, iLength, ABC):
             self.selection = None
             self.push(context.window)
         
-        @self.event(self.keys['MoveUp'])
+        @self.eventmethod(self.keys['MoveUp'])
         def event_move_up(context):
             if not self.selection:
                 return
             self.item_dict.move_forward(self.selection)
             self.push(context.window)
         
-        @self.event(self.keys['MoveDown'])
+        @self.eventmethod(self.keys['MoveDown'])
         def event_move_down(context):
             if not self.selection:
                 return
             self.item_dict.move_back(self.selection)
             self.push(context.window)
         
-        @self.event(self.keys['MoveToTop'])
+        @self.eventmethod(self.keys['MoveToTop'])
         def event_move_to_top(context):
             if not self.selection:
                 return
             self.item_dict.move_to_front(self.selection)
             self.push(context.window)
         
-        @self.event(self.keys['MoveToBottom'])
+        @self.eventmethod(self.keys['MoveToBottom'])
         def event_move_to_bottom(context):
             if not self.selection:
                 return
@@ -292,7 +294,8 @@ class DetailList(GuiElement, iLength, ABC):
         pass
 
     @abstractmethod
-    def edit_data(self, context, item, data) -> str:
+    def edit_data(self, context, item, data) -> tuple[WRC, str]:
+        """Returns: WRC, data"""
         pass
 
     @abstractmethod

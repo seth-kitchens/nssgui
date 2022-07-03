@@ -182,7 +182,7 @@ class VFSExplorerView(GuiElement):
     
     def define_events(self):
         super().define_events()
-        @self.event(self.keys['Listbox'])
+        @self.eventmethod(self.keys['Listbox'])
         def event_listbox(context):
             sge_listbox = context.window[self.keys['Listbox']]
             is_double_click = (not sge_listbox.is_right_click()) and self.check_double_click('Listbox')
@@ -202,7 +202,7 @@ class VFSExplorerView(GuiElement):
                 self.select(listbox_row)
                 self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxFolder', 'Open'))
+        @self.eventmethod(self.key_rcm('ListboxFolder', 'Open'))
         def event_open_folder(context):
             if not self.selection:
                 return
@@ -212,17 +212,17 @@ class VFSExplorerView(GuiElement):
             self.deselect()
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxFolder', 'Back'))
-        @self.event(self.key_rcm('ListboxFile', 'Back'))
-        @self.event(self.keys['ExitFolder'])
-        def event_exit_folder(context):
+        @self.eventmethod(self.key_rcm('ListboxFolder', 'Back'))
+        @self.eventmethod(self.key_rcm('ListboxFile', 'Back'))
+        @self.eventmethod(self.keys['ExitFolder'])
+        def events_exit_folder(context):
             self.vfs_explorer.exit_folder()
             self.deselect()
             self.push(context.window)
 
-        @self.event(self.key_rcm('ListboxFolder', 'Remove'))
-        @self.event(self.key_rcm('ListboxFile', 'Remove'))
-        @self.event(self.keys['Remove'])
+        @self.eventmethod(self.key_rcm('ListboxFolder', 'Remove'))
+        @self.eventmethod(self.key_rcm('ListboxFile', 'Remove'))
+        @self.eventmethod(self.keys['Remove'])
         def event_remove(context):
             if not self.selection:
                 return
@@ -233,8 +233,8 @@ class VFSExplorerView(GuiElement):
             self.deselect()
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxNone', 'AddFolder'))
-        @self.event(self.keys['AddFolder'])
+        @self.eventmethod(self.key_rcm('ListboxNone', 'AddFolder'))
+        @self.eventmethod(self.keys['AddFolder'])
         def event_add_folder(context):
             item_path = nss_sg.browse_folder(context.window)
             if item_path == '':
@@ -244,8 +244,8 @@ class VFSExplorerView(GuiElement):
             self.vfs_explorer.exit_to_root()
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxNone', 'AddFiles'))
-        @self.event(self.keys['AddFiles'])
+        @self.eventmethod(self.key_rcm('ListboxNone', 'AddFiles'))
+        @self.eventmethod(self.keys['AddFiles'])
         def event_add_files(context):
             item_paths = nss_sg.browse_files(context.window)
             if len(item_paths) <= 0:
@@ -256,13 +256,13 @@ class VFSExplorerView(GuiElement):
             self.vfs_explorer.exit_to_root()
             self.push(context.window)
         
-        @self.event(self.keys['ExitToRoot'])
-        def event_exit_to_root(context):
+        @self.eventmethod(self.keys['ExitToRoot'])
+        def events_exit_to_root(context):
             self.vfs_explorer.exit_to_root()
             self.deselect()
             self.push(context.window)
         
-        @self.event(self.keys['RemoveAll'])
+        @self.eventmethod(self.keys['RemoveAll'])
         def event_remove_all(context):
             if not popups.confirm(context, 'Remove All?'):
                 return

@@ -84,7 +84,7 @@ class CycleButton(GuiElement):
     
     def define_events(self):
         super().define_events()
-        @self.event(self.keys['Button'])
+        @self.eventmethod(self.keys['Button'])
         def event_button(context):
             self.cycle()
             self.push(context.window)

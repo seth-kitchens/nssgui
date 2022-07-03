@@ -5,7 +5,7 @@ from functools import wraps
 
 import PySimpleGUI as sg
 from nssgui import g as nss_g
-from nssgui.event_manager import EventManager
+from nssgui.event_manager import WRC, EventManager, EventLoop
 from nssgui.sg.utils import MenuDict
 
 __all__ = [
@@ -73,7 +73,7 @@ class GuiElementManager:
     def __init__(self):
         self.gem_id = GuiElementManager.num_gems
         GuiElementManager.num_gems += 1
-        self.ges = {}
+        self.ges:dict[str,GuiElement] = {}
         self.gem_keys = {}
 
         self.status_bar_key = None
@@ -89,13 +89,13 @@ class GuiElementManager:
     
     # add an object if it doesn't already exist and return its layout elements
 
-    def layout(self, ge):
+    def layout(self, ge) -> list[list]:
         self.add_ge(ge)
         return self.ges[ge.object_id].get_layout()
-    def row(self, ge):
+    def row(self, ge) -> list:
         self.add_ge(ge)
         return self.ges[ge.object_id].get_row()
-    def sge(self, ge):
+    def sge(self, ge) -> sg.Element:
         self.add_ge(ge)
         return self.ges[ge.object_id].get_sge()
     
@@ -107,18 +107,19 @@ class GuiElementManager:
             ge.load(data)
     def init_window_all(self, window):
         for ge in self.ges.values():
-            #if ge.object_id in window.AllKeysDict:
             ge.init_window(window)
     def pull_all(self, values):
         for ge in self.ges.values():
-            # print('pulling values for', ge.object_id)
             ge.pull(values)
     def push_all(self, window):
         for ge in self.ges.values():
             ge.push(window)
     def handle_event(self, context):
         for ge in self.ges.values():
-            ge.handle_event(context)
+            rv = WRC(ge.handle_event(context))
+            if rv.check_close():
+                return rv
+        return WRC.none()
     
     # generate a unique key that won't need to be used manually
     def gem_key(self, unique_string):
@@ -132,7 +133,7 @@ class GuiElementManager:
 
 # GuiElement
 
-class GuiElement(ABC):
+class GuiElement(ABC, EventManager):
     class layout_types:
         SGE = 'sge'
         ROW = 'row'
@@ -140,6 +141,7 @@ class GuiElement(ABC):
     def __init__(self, object_id, layout_type:str) -> None:
         if not layout_type in ['sge', 'row', 'layout']:
             raise ValueError('Bad layout_type')
+        super().__init__(debug_id='GE:' + object_id)
         self.layout_type = layout_type
         self.object_id = object_id
         self.keys = {}
@@ -153,7 +155,6 @@ class GuiElement(ABC):
         self.has_validity = False
         self.prev_click_time = 0
         self.prev_click_id = None
-        self.em = EventManager()
         self.events_defined = False
         self.right_click_menus = MenuDict()
         self.define_menus()
@@ -165,28 +166,28 @@ class GuiElement(ABC):
 
     # These are virtual, but one must be implemented
     # postfix partials/alternatives (e.g. get_sge_basename(...), get_sge_extension(...))
-    def _get_sge(self):
+    def _get_sge(self) -> sg.Element:
         raise NotImplemented
     @initafter
-    def get_sge(self): # One sg element
+    def get_sge(self) -> sg.Element: # One sg element
         if self.layout_type in [GuiElement.layout_types.LAYOUT, GuiElement.layout_types.ROW]:
             raise RuntimeError('GuiElement of type ' + self.layout_type + ' does not support get_sge()')
         return self._get_sge()
     
-    def _get_row(self):
+    def _get_row(self) -> list:
         raise NotImplementedError
     @initafter
-    def get_row(self): # A list of sg elements
+    def get_row(self) -> list: # A list of sg elements
         if self.layout_type == GuiElement.layout_types.LAYOUT:
             raise RuntimeError('GuiElement of type ' + self.layout_type + ' does not support get_row()')
         elif self.layout_type == GuiElement.layout_types.SGE:
             return [self.get_sge()]
         return self._get_row()
     
-    def _get_layout(self):
+    def _get_layout(self) -> list[list]:
         raise NotImplementedError
     @initafter
-    def get_layout(self): # A list of lists of sg elements
+    def get_layout(self) -> list[list]: # A list of lists of sg elements
         if self.layout_type == GuiElement.layout_types.SGE:
             return [[self.get_sge()]]
         elif self.layout_type == GuiElement.layout_types.ROW:
@@ -258,8 +259,11 @@ class GuiElement(ABC):
     ## Virtuals
 
     def handle_event(self, context):
-        self.em.handle_event(context)
-        self.gem.handle_event(context)
+        rv = WRC(super().handle_event(context))
+        if rv.check_close():
+            return rv
+        rv |= WRC(self.gem.handle_event(context))
+        return rv
 
     def _is_valid(self):
         pass
@@ -276,11 +280,6 @@ class GuiElement(ABC):
         self._push_validity(window)
     
     ## Other
-
-    def prepare_event_manager(self):
-        em = EventManager()
-        em.handle_event_function(self.handle_event)
-        return em
 
     def set_sg_kwargs(self, key_prefix, overwrite_kwargs=True, **kwargs):
         if not key_prefix in self.sg_kwargs:
@@ -317,28 +316,6 @@ class GuiElement(ABC):
     def make_key(cls, key_prefix, key_root):
         return str(key_prefix) + str(key_root)
     
-    
-    def event(self, key):
-        """Decorator\n
-        \n
-        @self.event('event_key')\n
-        def event_func(context):\n
-            ...\n
-        \n
-        Also, stackable\n
-        @self.event('event_key1')\n
-        @self.event('event_key2')\n
-        def event_func(context):\n
-            ..."""
-        return self.em.event(key)
-    def events(self, keys):
-        """Decorator, shorthand for multiple @self.event(...) decorators\n
-        \n
-        @self.events(['event_key1', 'event_key2'])\n
-        def event_func(context):\n
-            ..."""
-    def append_event(self, prev_key, key):
-        return self.em.append(prev_key, key)
     
     def key_rcm(self, rcm_name, *args):
         menu = self.right_click_menus[rcm_name]

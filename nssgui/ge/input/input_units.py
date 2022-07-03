@@ -84,7 +84,7 @@ class InputUnits(GuiElement):
     
     def define_events(self):
         super().define_events()
-        @self.event(self.ges('Unit').keys['Dropdown'])
+        @self.eventmethod(self.ges('Unit').keys['Dropdown'])
         def event_dropdown(context):
             if not self.auto_scale_units:
                 return
@@ -97,7 +97,7 @@ class InputUnits(GuiElement):
                 self.reset(degree_name)
             self.push(context.window)
         
-        @self.event(self.keys['In'])
+        @self.eventmethod(self.keys['In'])
         def event_in(context):
             self.pull(context.values)
             self.push_validity(context.window)

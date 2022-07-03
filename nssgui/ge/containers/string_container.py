@@ -64,14 +64,14 @@ class StringContainer(ListContainer):
     
     def define_events(self):
         super().define_events()
-        @self.event(self.keys['Add'])
+        @self.eventmethod(self.keys['Add'])
         def event_add(context):
             path = context.values[self.keys['Add']]
             if path:
                 self.ge.add_item(path)
             self.push(context.window)
         
-        @self.event(self.keys['In'])
+        @self.eventmethod(self.keys['In'])
         def event_in(context):
             self.pull(context.values)
             self.push_validity(context.window)

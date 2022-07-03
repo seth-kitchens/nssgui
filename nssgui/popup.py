@@ -5,7 +5,7 @@ from typing import Iterable
 
 import PySimpleGUI as sg
 from nssgui.style import colors
-from nssgui.event_manager import EventManager
+from nssgui.event_manager import NULL_EVENT, EventManager, EventLoop, WRC
 from nssgui import sg as nss_sg
 from nssgui.window import WindowContext
 
@@ -43,7 +43,7 @@ class Popup:
         self.auto_ok_text = None
         self.auto_ok_secs = None
         self.pes = {} # key->PopupElement, ordered, key may be garbage unique value
-        self.final_event = None
+        self.final_event = NULL_EVENT
         self.final_values = None
         self.init_focus = None
         self.true_events = []
@@ -95,7 +95,7 @@ class Popup:
         self.pe(PopupElement.ge_row(cls, key, args=args, **kwargs))
         return self
 
-    def open(self, context:WindowContext):
+    def open(self, context:WindowContext) -> WRC:
         context.disable()
 
         self.false_events.append(sg.WIN_CLOSED)
@@ -108,29 +108,32 @@ class Popup:
             we = context.window[self.init_focus]
             we.set_focus()
             nss_sg.set_cursor_to_end(we)
+        em = EventManager(debug_id='Popup' + str(self.title))
+        em.event_value_close_save(*self.true_events)
+        em.event_value_close_discard(*self.false_events)
+        event_loop = EventLoop(em)
         if self.auto_ok_secs:
-            em = EventManager(true_events=self.true_events, false_events=self.false_events)
             context.data['self'] = self
             
-            @em.update()
+            @event_loop.updatecallback
             def uf(context:WindowContext):
                 popup = context.data['self']
                 secs_passed = context.data['time']
                 secs_left = popup.auto_ok_secs - secs_passed
                 popup.update_auto_ok(context.window, secs_left)
                 if secs_left < -0.2:
-                    return False
-                return None
+                    return WRC.close()
+                return WRC.none()
             
-            rv = em.timed_event_loop(context)
+            rv = WRC(event_loop.run_timed(context))
         else:
-            em = EventManager(true_events=self.true_events, false_events=self.false_events)
-            rv = em.event_loop(context)
-        self.final_event = em.final_event
-        self.final_values = em.final_values
+            rv = WRC(event_loop.run(context))
+        self.final_event = event_loop.final_event
+        self.final_values = event_loop.final_values
         context.pop()
         context.enable()
         context.focus()
+        rv.closed_window()
         return rv
 
 class PopupBuilder:
@@ -140,7 +143,7 @@ class PopupBuilder:
         form the body of the popup, between any headers or buttons"""
         self.popup = Popup()
         self._pes = []
-        self.final_event = None
+        self.final_event = NULL_EVENT
         self.final_values = None
 
         # Unordered
@@ -315,7 +318,7 @@ class popups:
         ).init_focus('In')
         rv = pb.open(context)
         values = pb.final_values
-        return values['In'] if rv else s
+        return values['In'] if rv.check_success() else s
     def choose(context, text:str|Iterable|None, options:Iterable|dict, title='', **button_kwargs):
         pb = PopupBuilder().title(title).text(text)
 
@@ -337,4 +340,4 @@ class popups:
 
         rv = pb.open(context)
         event = pb.final_event
-        return event if rv else None
+        return event if rv.check_success() else None

@@ -129,7 +129,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
     def define_events(self):
         super().define_events()
         
-        @self.event(self.keys['Listbox'])
+        @self.eventmethod(self.keys['Listbox'])
         def event_listbox(context):
             sge_listbox = context.window[self.keys['Listbox']]
             is_double_click = (not sge_listbox.is_right_click()) and self.check_double_click('Listbox')
@@ -145,8 +145,8 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
                 self.selected_index = selections[0]
             self.push(context.window)
     
-        @self.event(self.key_rcm('ListboxItem', 'Edit'))
-        @self.event(self.keys['Edit'])
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Edit'))
+        @self.eventmethod(self.keys['Edit'])
         def event_edit(context):
             if self.selected_index == None:
                 return
@@ -173,8 +173,8 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
                 self.select_item(new_item)
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxItem', 'Remove'))
-        @self.event(self.keys['Remove'])
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Remove'))
+        @self.eventmethod(self.keys['Remove'])
         def event_remove(context):
             if self.selected_index == None:
                 return
@@ -182,7 +182,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             self.deselect()
             self.push(context.window)
         
-        @self.event(self.keys['RemoveAll'])
+        @self.eventmethod(self.keys['RemoveAll'])
         def event_remove_all(context):
             if not len(self):
                 return
@@ -192,8 +192,8 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             self.deselect()
             self.push(context.window)
         
-        @self.event(self.key_rcm('ListboxItem', 'Clone'))
-        @self.event(self.keys['Clone'])
+        @self.eventmethod(self.key_rcm('ListboxItem', 'Clone'))
+        @self.eventmethod(self.keys['Clone'])
         def event_clone(context):
             if self.selected_index == None:
                 return
@@ -207,8 +207,8 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             self.select_item(item)
             self.push(context.window)
 
-        @self.event(self.key_rcm('ListboxNone', 'Add'))
-        @self.event(self.keys['Add'])
+        @self.eventmethod(self.key_rcm('ListboxNone', 'Add'))
+        @self.eventmethod(self.keys['Add'])
         def event_add(context):
             item = popups.edit_string(context, '', title='Add')
             item = self.format_item(item)
@@ -221,7 +221,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             self.select_item(item)
             self.push(context.window)
         
-        @self.event(self.keys['MoveUp'])
+        @self.eventmethod(self.keys['MoveUp'])
         def event_move_up(context):
             if self.selected_index == None:
                 return
@@ -234,7 +234,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             self.selected_index -= 1
             self.push(context.window)
         
-        @self.event(self.keys['MoveDown'])
+        @self.eventmethod(self.keys['MoveDown'])
         def event_move_down(context):
             if self.selected_index == None:
                 return
@@ -247,7 +247,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             self.selected_index += 1
             self.push(context.window)
         
-        @self.event(self.keys['MoveToTop'])
+        @self.eventmethod(self.keys['MoveToTop'])
         def event_move_to_top(context):
             if self.selected_index == None:
                 return
@@ -257,7 +257,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             self.selected_index = 0
             self.push(context.window)
         
-        @self.event(self.keys['MoveToBottom'])
+        @self.eventmethod(self.keys['MoveToBottom'])
         def event_move_to_bottom(context):
             if self.selected_index == None:
                 return
