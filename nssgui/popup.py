@@ -176,15 +176,15 @@ class PopupBuilder:
         """Ordered"""
         self.pe(PopupElement.ge_row(cls, key, args=args, **kwargs))
         return self
-    def text(self, text:str|Iterable|None):
+    def text(self, text:str|Iterable|None, text_color=None):
         """Ordered. 'None' is ignored."""
         if text == None:
             return self
         if isinstance(text, str):
-            self.sge(sg.Text, text=text).newline()
+            self.sge(sg.Text, text=text, text_color=text_color).newline()
         else:
             for s in text:
-                self.sge(sg.Text, text=s).newline()
+                self.sge(sg.Text, text=s, text_color=text_color).newline()
         return self
     def textwrap(self, s, width=70):
         """Ordered"""
