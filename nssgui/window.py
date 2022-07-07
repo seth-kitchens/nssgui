@@ -95,6 +95,8 @@ class AbstractWindow(ABC, EventManager):
 
         self.window:sg.Window = None
         self.status_bar_key = None
+
+        self.timed_events = []
     
     # Layout
     
@@ -167,11 +169,21 @@ class AbstractWindow(ABC, EventManager):
         Placing a [sg.Sizer(0, 10)] row above a status bar is suggested."""
         self.status_bar_key = ge.object_id
         return self.gem.row(ge)
-    def update_status_bar(self, text):
+    def update_status_bar(self, text:str=None, after_secs:float|None=None, after_text:str=''):
+        """
+        `text`: If not `None`, updates status bar with this immediately
+        `after_secs`: If not `None`, updates status bar with `after_text` after `after_secs` seconds
+        `after_text`: Text to be displayed after `after_secs` seconds
+        """
         if self.status_bar_key == None:
             raise RuntimeError('StatusBar has not been specified.')
-        self.gem[self.status_bar_key].update(self.window, text)
+        status_bar = self.gem[self.status_bar_key]
+        if text != None:
+            status_bar.update_status(self.window, text)
         self.window.refresh()
+        if after_secs != None:
+            func = lambda context : status_bar.update_status(context.window, after_text)
+            self.event_after(func, after_secs)
 
 class AbstractBlockingWindow(AbstractWindow):
     """

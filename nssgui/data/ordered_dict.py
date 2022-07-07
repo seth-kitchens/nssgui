@@ -37,6 +37,17 @@ class OrderedDict:
             key = self.key_list.pop()
             value = self.value_list.pop()
         return key, value
+    def pop_front_if(self, if_func) -> list[tuple]:
+        popped = []
+        while len(self.key_list):
+            k = self.key_list[0]
+            v = self.value_list[0]
+            if if_func(k, v):
+                self.pop(0)
+                popped.append((k, v))
+            else:
+                break
+        return popped
     def prepend(self, key, value):
         self.remove(key)
         self.key_list.insert(0, key)
@@ -82,6 +93,21 @@ class OrderedDict:
             self.append(key, value)
         i_before = self.key_list.index(after_key) + 1
         self.insert(i_before, key, value)
+    def insert_before_if(self, if_func, key, value):
+        """
+        Calls if_func(key, value)->bool on every k-v pair until True, then inserting. Appends if no True
+        """
+        i = 0
+        found = False
+        while i < len(self.key_list):
+            k = self.key_list[i]
+            v = self.value_list[i]
+            if if_func(k, v):
+                self.insert(i, key, value)
+                found = True
+                break
+        if not found:
+            self.append(key, value)
     def move_forward(self, key, n=1):
         if n < 1 or not key in self.key_list:
             return

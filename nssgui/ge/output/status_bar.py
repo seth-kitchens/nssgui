@@ -44,6 +44,7 @@ class StatusBar(GuiElement):
     
     ### OutText
 
-    def update(self, window, text):
+    def update_status(self, window, text:str):
         self.text = text
         self.push(window)
+

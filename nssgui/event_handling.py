@@ -3,6 +3,8 @@ import time
 import inspect
 import PySimpleGUI as sg
 
+from nssgui.data.ordered_dict import OrderedDict
+
 __all__ = [
     'EventManager',
     'EventLoop',
@@ -154,14 +156,15 @@ WRC = WindowReturnCode
 
 class EventManager:
     def __init__(self, debug_id:str=None):
-        self._callbacks_event_handlers:list[Callback] = []
-        self._callbacks_event:dict[str, Callback] = {}
+        self._callbacks_events_handlers:list[Callback] = []
+        self._callbacks_events:dict[str, Callback] = {}
+        self._callbacks_timed_events:OrderedDict[float, Callback] = OrderedDict()
         self.debug_id = debug_id
     
     def copy(self):
         em = EventManager(self.debug_id)
-        em._callbacks_event_handlers = self._callbacks_event_handlers.copy()
-        em._callbacks_event = self._callbacks_event.copy()
+        em._callbacks_events_handlers = self._callbacks_events_handlers.copy()
+        em._callbacks_events = self._callbacks_events.copy()
         return em
     
 
@@ -172,18 +175,24 @@ class EventManager:
         """func: func(WindowContext)"""
         callback = Callback.event(func)
         for event in events:
-            self._callbacks_event[event] = callback
+            self._callbacks_events[event] = callback
     
 
     def event_handler(self, func):
         callback = Callback.event_handler(func)
-        self._callbacks_event_handlers.append(callback)
+        self._callbacks_events_handlers.append(callback)
     
 
     def event_value(self, value:int, *events):
         callback = Callback.event_value(value)
         for event in events:
-            self._callbacks_event[event] = callback
+            self._callbacks_events[event] = callback
+    
+
+    def event_after(self, func, after_secs:float):
+        callback = Callback.event(func)
+        at_time = time.time() + after_secs
+        self._callbacks_timed_events.insert_before_if(lambda k, v: at_time < k, at_time, callback)
     
 
     ###
@@ -226,22 +235,30 @@ class EventManager:
     
 
     def handle_event(self, context) -> WRC:
-        for callback in self._callbacks_event_handlers:
+        for callback in self._callbacks_events_handlers:
             rv = WRC(callback.func(context), 'EventHandler ' + callback.get_info())
             if rv.check_close():
                 return rv
-        if context.event in self._callbacks_event.keys():
-            callback = self._callbacks_event[context.event]
+        if context.event in self._callbacks_events.keys():
+            callback = self._callbacks_events[context.event]
             rv = WRC(callback.func(context), 'Event ' + callback.get_info())
             if rv.check_close():
                 return rv
         return WRC()
     
+    def handle_timed_events(self, context):
+        current_time = time.time()
+        ready = self._callbacks_timed_events.pop_front_if(lambda k, v : k < current_time)
+        for _, cb in ready:
+            rv = WRC(cb.func(context))
+            if rv.check_close():
+                return rv
+        return WRC()
     
 
 class EventLoop:
     def __init__(self, em:EventManager=None):
-        self.em = em.copy()
+        self.em = em
         self.em.debug_id = 'EventLoop' + self.em.debug_id
         self._callbacks_update = []
         self._callbacks_init_window = []
@@ -306,14 +323,20 @@ class EventLoop:
             cb(context.window)
         rv = WRC()
         is_win_closed = False
+        if read_time == None:
+            read_time = -1
         while True:
-            if read_time != None and read_time <= 0:
-                context.event, context.values = context.window.read()
+            if read_time > 0 or len(self.em._callbacks_timed_events) > 0:
+                rt = read_time if read_time >= 10 else 10
+                context.event, context.values = context.window.read(rt)
             else:
-                context.event, context.values, = context.window.read(read_time)
+                context.event, context.values = context.window.read()
             if context.event == sg.WIN_CLOSED:
                 is_win_closed = True
             context.data['time'] = time.time() - start_time
+            rv = WRC(self.em.handle_timed_events(context))
+            if rv.check_close():
+                break
             for uf in self._callbacks_update:
                 rv = WRC(uf(context))
                 if rv.check_close():
@@ -325,8 +348,8 @@ class EventLoop:
                 break
             if is_win_closed:
                 print('Failed to catch WIN_CLOSED event.')
-                print('Events: {}'.format(self.em._callbacks_event))
-                print('EventHandlers: {}'.format(self.em._callbacks_event_handlers))
+                print('Events: {}'.format(self.em._callbacks_events))
+                print('EventHandlers: {}'.format(self.em._callbacks_events_handlers))
                 break
         context.window.close()
         if rv.check_success():

@@ -52,8 +52,8 @@ class InfoBuilder:
         s = wjoin(text)
         self.add(InfoBuilderItem(InfoBuilder._TEXT, None, s))
         return self
-    def header(self, header:str, text:str|Iterable|None=None):
-        s = wjoin(text)
+    def header(self, header:str, subheader:str|Iterable|None=None):
+        s = wjoin(subheader)
         self.add(InfoBuilderItem(InfoBuilder._HEADER, header, s))
         return self
     def frame(self, label, text=str|Iterable):
