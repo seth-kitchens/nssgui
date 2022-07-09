@@ -2,14 +2,24 @@ import json
 from typing import Any, Iterable
 
 import PySimpleGUI as sg
+
 from nssgui.ge.gui_element import *
 from nssgui.popup import popups
 from nssgui.sg import wrapped as sg_wrapped
 
+
 __all__ = ['TextList']
 
+
 class TextList(GuiElement, iLength, iStringable, iEdittable):
-    def __init__(self, object_id, delim=None, border:str|Iterable='', strip:str|Iterable='', empty_text='', allow_duplicates=False):
+    
+    def __init__(self,
+            object_id,
+            delim=None,
+            border:str|Iterable='', 
+            strip:str|Iterable='',
+            empty_text='',
+            allow_duplicates=False):
         super().__init__(object_id, GuiElement.layout_types.LAYOUT)
         self.delim = delim
         if isinstance(border, str):
@@ -51,7 +61,8 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
         ]
         row_buttons_main_bottom = [
             sg.Button('Remove', key=self.keys['Remove'], expand_x=True, **main_button_kwargs),
-            sg.Button('Remove All', key=self.keys['RemoveAll'], expand_x=True, **main_button_kwargs)
+            sg.Button('Remove All',
+                key=self.keys['RemoveAll'], expand_x=True, **main_button_kwargs)
         ]
         column_buttons_main = sg.Column(justification='center', layout=[
             row_buttons_main_top,
@@ -72,21 +83,28 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             rcm_listbox = self.right_click_menus['ListboxNone']
         else:
             rcm_listbox = self.right_click_menus['ListboxItem']
-        return sg_wrapped.Listbox(self.get_display_list(), key=keys['Listbox'], size=(30, listbox_height), expand_x=True, expand_y=True, enable_events=True, bind_return_key=True, right_click_menu=rcm_listbox.get_def(), right_click_selects=True)    
+        return sg_wrapped.Listbox(self.get_display_list(),
+            key=keys['Listbox'], size=(30, listbox_height), expand_x=True, expand_y=True,
+            enable_events=True, bind_return_key=True, right_click_menu=rcm_listbox.get_def(),
+            right_click_selects=True)    
     
     # Data
 
     def _init(self):
         pass
+    
     def _save(self, data):
         if not self.allow_duplicates:
             self.items = list(set(self.items))
         data[self.object_id] = self.items.copy()
+    
     def _load(self, data):
         self.items.clear()
         self.items.extend(data[self.object_id])
+    
     def _pull(self, values):
         pass
+    
     def _push(self, window):
         sge_listbox:sg_wrapped.Listbox = window[self.keys['Listbox']]
         sge_listbox.update(self.get_display_list())
@@ -96,6 +114,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
         else:
             sge_listbox.update(set_to_index=[])
             sge_listbox.set_right_click_menu(self.right_click_menus['ListboxNone'].get_def())
+    
     def _init_window(self, window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.push(window)
@@ -132,7 +151,10 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
         @self.eventmethod(self.keys['Listbox'])
         def event_listbox(context):
             sge_listbox = context.window[self.keys['Listbox']]
-            is_double_click = (not sge_listbox.is_right_click()) and self.check_double_click('Listbox')
+            is_double_click = False
+            if not sge_listbox.is_right_click():
+                if self.check_double_click('Listbox'):
+                    is_double_click = True
             if not self.items:
                 self.deselect()
                 self.push(context.window)
@@ -155,7 +177,9 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             if new_item == item:
                 return
             if new_item in self.items:
-                rv = popups.choose(context, text='"' + new_item + '" already exists. Remove "' + item + '" ?', options=['Remove', 'Cancel'])
+                rv = popups.choose(context,
+                    text='"{}" already exists. Remove "{}" ?'.format(new_item, item),
+                    options=['Remove', 'Cancel'])
                 if rv != 'Remove':
                     return
                 self.items.remove(item)
@@ -307,16 +331,22 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
 
     def add_item(self, item):
         self.items.append(item)
+    
     def get_selected_item(self):
         return self.items[self.selected_index]
+    
     def get_selected_display_item(self):
         return self.item_to_display_item(self.items[self.selected_index])
+    
     def select_item(self, item):
         self.selected_index = self.items.index(item)
+    
     def deselect(self):
         self.selected_index = None
+    
     def format_item(self, item):
         return item.lstrip(self.lstrip).rstrip(self.rstrip)
+    
     def format_items(self):
         items = self.items.copy()
         self.items.clear()
@@ -324,10 +354,13 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             item = self.format_item(item)
             if item:
                 self.items.append(item)
+    
     def item_to_display_item(self, item):
         return self.lborder + item + self.rborder
+    
     def display_item_to_item(self, display_item):
         return display_item[len(self.lborder):0 - len(self.rborder)]
+    
     def get_display_list(self):
         display_list = []
         for item in self.items:

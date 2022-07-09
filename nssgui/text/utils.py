@@ -1,11 +1,13 @@
 from typing import Iterable
 import math
 
+
 __all__ = [
     'center_decimal_string',
     'TableList',
     'PrintColumn'
 ]
+
 
 def center_decimal_string(s, side, lpad=' ', rpad='0'):
     if '.' not in s:
@@ -15,11 +17,14 @@ def center_decimal_string(s, side, lpad=' ', rpad='0'):
         s = parts[0].rjust(side, lpad) + '.' + parts[1].ljust(side, rpad)
     return s
 
+
 class TableList:
+
     def __init__(self, sep='', sep_before_indices=[], field_border_l='[', field_border_r=']'):
         """
         ---
-        Add rows with an equal number of fields, then print/get them as a formatted table of columns with equal length
+        Add rows with an equal number of fields, then print/get them as a
+        formatted table of columns with equal length
         
         Usage:
           tl = TableList()
@@ -37,13 +42,14 @@ class TableList:
         self.field_border_l = field_border_l
         self.field_border_r = field_border_r
         self.rows:list[list[str]] = [] # list of rows, each row is a list of fields
-        return
+
     def add_row(self, row: list):
         if self.rows and len(row) != len(self.rows[0]):
+            expected = len(self.rows[0])
+            actual = len(row)
             raise Exception('Bad Parameter',
-                'Expected row of length ' + str(len(self.rows[0])) + ', received row of length ' + str(len(row)))
+                'Expected row of length {}, received row of length {}'.format(expected, actual))
         self.rows.append(row)
-        return
     
     def empty_row_len(self):
         num_fields = len(self.rows[0])
@@ -61,11 +67,16 @@ class TableList:
         max_lens = self.find_max_lens()
         current_table_len = empty_row_len + sum(max_lens)
         return current_table_len - max_table_width
-    # make table fit into a max width by trimming fields, list of fields is (field_index, min_width)
-    # only trims fields listed, in order listed, down to at most min_width, until max_table_width is achieved
-    # trims each field as much as possible before moving to next field, make multiple calls for
-    #     even trimming
+
     def trim_fields(self, max_table_width, fields_to_trim:list[tuple[int, int]]=None):
+        """
+        Make table fit into a max width by trimming fields
+        fields_to_trim: (field_index, min_width)
+        Only trims fields listed, in order listed, down to at most min_width,
+            until max_table_width is achieved.
+        Trims each field as much as possible before moving to next field.
+        Make multiple calls for even trimming
+        """
         if not self.rows:
             return
                 
@@ -118,7 +129,8 @@ class TableList:
         num_fields = len(self.rows[0])
         for row in self.rows:
             if len(row) != num_fields:
-                raise Exception('Rows Uneven', 'Expected: ' + str(len(num_fields)) + ', Received: ' + str(len(row)))
+                raise Exception(
+                    'Rows Uneven', 'Expected: {}, Received: {}'.format(len(num_fields), len(row)))
         max_lens = []
         for i in range(num_fields):
             max_lens.append(0)
@@ -144,27 +156,35 @@ class TableList:
                     sep = self.sep if i_field > 0 else ''
                 
                 row[i_field] = sep + self.field_border_l + field + self.field_border_r
+
     def get_formatted_rows(self) -> list:
         self.format_table()
         row_strings = []
         for row in self.rows:
             row_strings.append(''.join(row))
         return row_strings
+
     def print(self):
         rows = self.get_formatted_rows()
         for row in rows:
             print(row)
 
+
 cmd_width = 120
 
+
 class PrintColumn:
+
     def __init__(self, num_fields=1) -> None:
         self.rows = []
         self.num_fields = num_fields if num_fields > 0 else 0
+
     def __getitem__(self, index):
         return self.rows[index]
+
     def __setitem__(self, index, value):
         self.rows[index] = value
+
     def add_row(self, row):
         if self.num_fields:
             fields = []
@@ -173,23 +193,28 @@ class PrintColumn:
             self.rows.append(fields)
         else:
             self.rows.append(str(row))
+
     def add_rows(self, rows):
         for row in rows:
             if isinstance(row, Iterable) and not isinstance(row, str):
                 self.add_row(row)
             else:
                 self.add_row([row])
+
     def add_blank_row(self):
         row = []
         for i in range(self.num_fields):
             row.append('')
         self.add_row(row)
+
     def add_dict(self, d):
         for k, v in d.items():
             self.add_row([k, v])
+
     def print(self):
         for row in self.rows:
             print(row)
+
     def print_section(columns: list, max_table_width=cmd_width, sep=' | '):
         """
         ---
@@ -235,12 +260,18 @@ class PrintColumn:
         sep_before_indices.pop()
         
         # format columns
-        tl = TableList(field_border_l='', field_border_r='', sep=sep, sep_before_indices=sep_before_indices)
+        tl = TableList(field_border_l='', field_border_r='', sep=sep, 
+            sep_before_indices=sep_before_indices)
         for tl_row in tl_rows:
             tl.add_row(tl_row)
         tl.trim_longest(max_table_width)
         tl.print()
-    def split_print_section(self, column_count, max_table_width=cmd_width, split_type='alternate', sep=' | '):
+
+    def split_print_section(self,
+            column_count,
+            max_table_width=cmd_width,
+            split_type='alternate',
+            sep=' | '):
         """
         ---
         Split the column into multiple columns, then print them side-by-side
@@ -272,4 +303,3 @@ class PrintColumn:
                 columns[int(i / rows_per_col)].add_row(self.rows[i])
         
         return PrintColumn.print_section(columns, max_table_width=max_table_width, sep=sep)
-

@@ -5,3 +5,4 @@ class colors:
     header = 'gold'
     valid = 'white'
     invalid = 'lightgray'
+    

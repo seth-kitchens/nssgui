@@ -3,6 +3,7 @@ import PySimpleGUI as sg
 from nssgui.ge.gui_element import GuiElement
 
 class OutText(GuiElement):
+
     def __init__(self, object_id, label=None) -> None:
         super().__init__(object_id, GuiElement.layout_types.ROW)
         self.label = label
@@ -23,14 +24,19 @@ class OutText(GuiElement):
 
     def _init(self):
         self.init_sg_kwargs('Out')
+
     def _save(self, data):
         data[self.object_id] = self.value
+
     def _load(self, data):
         self.value = data[self.object_id]
+
     def _pull(self, values):
         pass
+
     def _push(self, window):
         window[self.keys['Out']](self.value)
+
     def _init_window(self, window):
         self.push(window)
 

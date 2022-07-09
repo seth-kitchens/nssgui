@@ -4,10 +4,12 @@ from math import ceil
 from typing import Iterable
 
 import PySimpleGUI as sg
+
 from nssgui.style import colors
 from nssgui.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
 from nssgui import sg as nss_sg
 from nssgui.window import WindowContext
+
 
 __all__ = [
     'PopupElement',
@@ -15,13 +17,15 @@ __all__ = [
     'PopupBuilder',
     'popups'
 ]
-
 button_size = nss_sg.button_size
 
+
 class PopupElement:
+
     GE_SGE = 'ge_sge'
     GE_ROW = 'ge_row'
     SGE = 'sge'
+
     def __init__(self, cls, pe_type, key=None, args=None, **kwargs):
         self.cls = cls
         self.pe_type = pe_type
@@ -30,14 +34,22 @@ class PopupElement:
             kwargs['key'] = key
         self.args = args if args != None else ()
         self.kwargs = kwargs
+
     def sge(cls, key=None, args=None, **kwargs):
-        return PopupElement(cls, PopupElement.SGE, key=key, args=args, **kwargs)
+        return PopupElement(
+            cls, PopupElement.SGE, key=key, args=args, **kwargs)
+
     def ge_sge(cls, key=None, args=None, **kwargs):
-        return PopupElement(cls, PopupElement.GE_SGE, key=key, args=args, **kwargs)
+        return PopupElement(
+            cls, PopupElement.GE_SGE, key=key, args=args, **kwargs)
+
     def ge_row(cls, key=None, args=None, **kwargs):
-        return PopupElement(cls, PopupElement.GE_ROW, key=key, args=args, **kwargs)
+        return PopupElement(
+            cls, PopupElement.GE_ROW, key=key, args=args, **kwargs)
+
 
 class Popup(EventManager):
+
     def __init__(self):
         super().__init__(debug_id='Popup')
         self.title = None
@@ -49,9 +61,9 @@ class Popup(EventManager):
         self.init_focus = None
         self.true_events = []
         self.false_events = []
+
     def get_layout(self):
         layout = []
-        
         row = []
         for pe in self.pes.values():
             if pe == None:
@@ -70,7 +82,6 @@ class Popup(EventManager):
                         row.append(sge)
         if row:
             layout.append(row)
-        
         return layout
     
     def update_auto_ok(self, window, secs_left):
@@ -78,31 +89,34 @@ class Popup(EventManager):
     
     def make_key(self):
         return str(time.time()) + str(len(self.pes))
+
     def newline(self):
         key = self.make_key()
         self.pes[key] = None
         return self
+
     def pe(self, pe):
         key = pe.key if pe.key != None else self.make_key()
         self.pes[key] = pe
         return self
+
     def sge(self, cls, key=None, args=None, **kwargs):
         self.pe(PopupElement.sge(cls, key, args=args, **kwargs))
         return self
+
     def ge_sge(self, cls, key=None, args=None, **kwargs):
         self.pe(PopupElement.ge_sge(cls, key, args=args, **kwargs))
         return self
+
     def ge_row(self, cls, key=None, args=None, **kwargs):
         self.pe(PopupElement.ge_row(cls, key, args=args, **kwargs))
         return self
 
     def open(self, context:WindowContext) -> WRC:
         context.disable()
-
         self.event_value_close(sg.WIN_CLOSED)
         self.event_value_close_success(*self.true_events)
         self.event_value_close(*self.false_events)
-
         layout = self.get_layout()
         title = self.title if self.title else ''
         context.push(sg.Window(title, layout, finalize=True))
@@ -136,11 +150,15 @@ class Popup(EventManager):
         rv.closed_window()
         return rv
 
+
 class PopupBuilder:
+
     def __init__(self) -> None:
-        """Some elements are ordered (text, ges/sges, etc)
+        """
+        Some elements are ordered (text, ges/sges, etc)
         and some aren't (ok button, title, etc) The ordered elements
-        form the body of the popup, between any headers or buttons"""
+        form the body of the popup, between any headers or buttons
+        """
         self.popup = Popup()
         self._pes = []
         self.final_event = NULL_EVENT
@@ -160,22 +178,27 @@ class PopupBuilder:
         """Ordered"""
         self._pes.append(pe)
         return self
+
     def newline(self):
         """Ordered"""
         self._pes.append(None)
         return self
+
     def sge(self, cls, key=None, args=None, **kwargs):
         """Ordered"""
         self.pe(PopupElement.sge(cls, key, args=args, **kwargs))
         return self
+
     def ge_sge(self, cls, key=None, args=None, **kwargs):
         """Ordered"""
         self.pe(PopupElement.ge_sge(cls, key, args=args, **kwargs))
         return self
+
     def ge_row(self, cls, key=None, args=None, **kwargs):
         """Ordered"""
         self.pe(PopupElement.ge_row(cls, key, args=args, **kwargs))
         return self
+
     def text(self, text:str|Iterable|None, text_color=None):
         """Ordered. 'None' is ignored."""
         if text == None:
@@ -186,6 +209,7 @@ class PopupBuilder:
             for s in text:
                 self.sge(sg.Text, text=s, text_color=text_color).newline()
         return self
+
     def textwrap(self, s, width=70):
         """Ordered"""
         strings = s.split('\n')
@@ -204,6 +228,7 @@ class PopupBuilder:
             return self
         self.popup.title = s
         return self
+
     def header(self, s, color=None):
         """Unordered"""
         if s == None:
@@ -212,26 +237,31 @@ class PopupBuilder:
         if color:
             self._header_color = color
         return self
+
     def subheader(self, s):
         """Unordered"""
         if s == None:
             return self
         self._subheader = s
         return self
+
     def ok(self, s='OK'):
         """Unordered"""
         self._ok = s
         return self
+
     def cancel(self, s='Cancel'):
         """Unordered"""
         self._cancel = s
         return self
+
     def auto_ok(self, secs=3):
         """Unordered"""
         if not self._ok:
             self._ok = 'OK'
         self._auto_ok_secs = secs
         return self
+
     def init_focus(self, key):
         """Unordered"""
         self.popup.init_focus = key
@@ -249,20 +279,21 @@ class PopupBuilder:
     
     def get(self):
         """Finalizer. Returns Popup object."""
-
         if self._header != None:
-            header_color = self._header_color if self._header_color else colors.header
-            self.popup.sge(sg.Text, text=self._header, text_color=header_color).newline()
+            if self._header_color:
+                header_color = self._header_color
+            else:
+                header_color = colors.header
+            self.popup.sge(
+                sg.Text, text=self._header, text_color=header_color).newline()
         if self._subheader != None:
             self.popup.sge(sg.Text, text=self._subheader).newline()
             self.popup.sge(sg.HSeparator).newline()
-        
         for pe in self._pes:
             if pe != None:
                 self.popup.pe(pe)
             else:
                 self.popup.newline()
-        
         has_button_row = (self._ok or self._cancel)
         if has_button_row:
             self.popup.sge(sg.Sizer, args=(0, 5)).newline()
@@ -274,21 +305,29 @@ class PopupBuilder:
                     ok_text = self._ok + ' [' + str(self._auto_ok_secs) + ']'
                 else:
                     ok_text = self._ok
-                self.popup.sge(sg.Button, key='ok', button_text='Ok', size=button_size.at_least(10, ok_text))
+                self.popup.sge(
+                    sg.Button, key='ok', button_text='Ok',
+                    size=button_size.at_least(10, ok_text))
                 self.popup.true_events.append('ok')
             if self._cancel:
-                self.popup.sge(sg.Button, key='cancel', button_text='Cancel', size=button_size.at_least(10, self._cancel))
+                self.popup.sge(
+                    sg.Button, key='cancel', button_text='Cancel',
+                    size=button_size.at_least(10, self._cancel))
                 self.popup.false_events.append('cancel')
             self.popup.sge(sg.Push)
-
         return self.popup
+
     def open(self, context):
-        """Finalizer. Opens popup window, then returns rv from event
-        (non-None that closed window) and values from last sg.Window.read() call"""
+        """
+        Finalizer. Opens popup window, then returns rv from event
+        (non-None that closed window) and values
+        from last sg.Window.read() call
+        """
         rv = self.get().open(context)
         self.final_event = self.popup.final_event
         self.final_values = self.popup.final_values
         return rv
+
     def get_layout(self):
         return self.popup.get_layout()
     
@@ -296,21 +335,57 @@ class PopupBuilder:
     
     class T:
         def error():
-            return PopupBuilder().title('Error').header('Error', colors.error).ok()
+            return PopupBuilder() \
+                .title('Error') \
+                .header('Error', colors.error) \
+                .ok()
+
         def warning():
-            return PopupBuilder().title('Warning').header('Warning', colors.warning).ok().cancel()
+            return PopupBuilder() \
+                .title('Warning') \
+                .header('Warning', colors.warning) \
+                .ok() \
+                .cancel()
+
 
 class popups:
+
     def ok(context, text:str|Iterable|None, title=''):
-        return PopupBuilder().ok().title(title).text(text).open(context)
+        return PopupBuilder() \
+            .ok() \
+            .title(title) \
+            .text(text) \
+            .open(context)
+    
     def confirm(context, text:str|Iterable|None, title='Confirm'):
-        return PopupBuilder().ok().cancel().title(title).text(text).open(context)
+        return PopupBuilder() \
+            .ok() \
+            .cancel() \
+            .title(title) \
+            .text(text) \
+            .open(context)
+    
     def error(context, text:str|Iterable|None):
-        return PopupBuilder.T.error().text(text).open(context)
+        return PopupBuilder.T.error() \
+            .text(text) \
+            .open(context)
+    
     def warning(context, text:str|Iterable|None):
-        return PopupBuilder.T.warning().text(text).open(context)
-    def edit_string(context, s, label=None, title='', body_text:str|Iterable|None=None, fill_prev=True):
-        pb = PopupBuilder().ok().cancel().title(title).text(body_text)
+        return PopupBuilder.T.warning() \
+            .text(text) \
+            .open(context)
+    
+    def edit_string(context,
+            s,
+            label=None,
+            title='',
+            body_text:str|Iterable|None=None, 
+            fill_prev=True):
+        pb = PopupBuilder() \
+            .ok() \
+            .cancel() \
+            .title(title) \
+            .text(body_text)
         if label != None:
             pb.pe(PopupElement.sge(sg.Text, key='Label', text=label))
         in_text = s if fill_prev else ''
@@ -320,12 +395,11 @@ class popups:
         rv = pb.open(context)
         values = pb.final_values
         return values['In'] if rv.check_success() else s
+    
     def choose(context, text:str|Iterable|None, options:Iterable|dict, title='', **button_kwargs):
         pb = PopupBuilder().title(title).text(text)
-
         if 'size' not in button_kwargs and 's' not in button_kwargs:
             button_kwargs['size'] = 10
-
         pb.pe(PopupElement.sge(sg.Push))
         if isinstance(options, dict):
             for key, text in options.items():
@@ -338,7 +412,6 @@ class popups:
                 pb.pe(pe)
                 pb.event_save_close(text)
         pb.pe(PopupElement.sge(sg.Push))
-
         rv = pb.open(context)
         event = pb.final_event
         return event if rv.check_success() else None

@@ -1,10 +1,13 @@
 import os
 from os.path import normpath
 
+
 class VFSEntry:
+    
     class entry_types:
         DIR = 'dir'
         FILE = 'file'
+    
     def __init__(self, init_path):
         self.path:str = normpath(init_path)
         self.parent:VFSEntry = None
@@ -12,22 +15,29 @@ class VFSEntry:
         self.entry_type = VFSEntry.path_to_type(self.path)
         self.size:int = 0
         self.name:str = os.path.basename(self.path)
+    
     def path_to_type(path):
         if os.path.isdir(path):
             return VFSEntry.entry_types.DIR
         elif os.path.isfile(path):
             return VFSEntry.entry_types.FILE
         return ''
+    
     @classmethod
     def from_parent(cls, parent, init_path):
         child = VFSEntry(init_path)
         parent.connect_child()
         return child
+    
     def connect_child(self, child):
         child.parent = self
         self.children.append(child)
     
-    def find_children_where(self, func_cond, func_found=None, recurse=True, include_self=True):
+    def find_children_where(self,
+            func_cond, 
+            func_found=None,
+            recurse=True, 
+            include_self=True):
         found = []
         if include_self and func_cond(self):
             if func_found:
@@ -36,10 +46,16 @@ class VFSEntry:
                 return found
         children = self.children.copy()
         for child in children:
-            found.extend(child.find_children_where(func_cond, func_found, recurse))
+            found_child = child.find_children_where(
+                func_cond, func_found, recurse)
+            found.extend(found_child)
         return found
     
-    def find_parents_where(self, func_cond, func_found=None, recurse=True, include_self=True):
+    def find_parents_where(self,
+            func_cond,
+            func_found=None,
+            recurse=True, 
+            include_self=True):
         found = []
         if include_self and func_cond(self):
             found.append(self)
@@ -48,10 +64,18 @@ class VFSEntry:
             if not recurse:
                 return found
         if self.parent:
-            found.extend(self.parent.find_parents_where(func_cond, func_found, recurse))
+            found_parent = self.parent.find_parents_where(
+                func_cond, func_found, recurse)
+            found.extend(found_parent)
         return found
     
-    def for_children(self, func, args=None, kwargs=None, recurse=True, include_self=False, return_nones=False):
+    def for_children(self,
+            func, 
+            args=None,
+            kwargs=None, 
+            recurse=True,
+            include_self=False,
+            return_nones=False):
         if args == None:
             args = []
         if kwargs == None:
@@ -67,11 +91,19 @@ class VFSEntry:
                 rvs.append(rv)
         if recurse:
             for child in self.children:
-                child_rvs = child.for_children(func, args=args, kwargs=kwargs, recurse=recurse, include_self=False, return_nones=return_nones)
+                child_rvs = child.for_children(func,
+                    args=args, kwargs=kwargs, recurse=recurse,
+                    include_self=False, return_nones=return_nones)
                 rvs.extend(child_rvs)
         return rvs
     
-    def for_parents(self, func, args=None, kwargs=None, recurse=True, include_self=True, return_nones=False):
+    def for_parents(self,
+            func,
+            args=None, 
+            kwargs=None,
+            recurse=True,
+            include_self=True,
+            return_nones=False):
         if args == None:
             args = []
         if kwargs == None:
@@ -82,7 +114,9 @@ class VFSEntry:
             if rv != None or return_nones:
                 rvs.append(rv)
         if recurse:
-            parent_rvs = self.parent.for_parents(func, recurse=recurse, include_self=False, return_nones=return_nones)
+            parent_rvs = self.parent.for_parents(func,
+                recurse=recurse, include_self=False,
+                return_nones=return_nones)
             rvs.extend(parent_rvs)
         return rvs
     
@@ -123,18 +157,19 @@ class VFSEntry:
             return
         if orphans == None:
             orphans = {}
-
         current_path = self.path
         fs_child_names = os.listdir(current_path)
         children_created = []
         for fs_child_name in fs_child_names:
-            child_path = os.path.normpath(os.path.join(current_path, fs_child_name))
+            child_path = os.path.normpath(
+                os.path.join(current_path, fs_child_name))
             if child_path in orphans:
                 self.children.append(orphans[child_path])
                 self.connect_child(orphans[child_path])
                 orphans.pop(child_path)
             else:
-                children_created.append(self.__class__.from_parent(self, child_path))
+                children_created.append(
+                    self.__class__.from_parent(self, child_path))
         for child in children_created:
             if child.is_dir():
                 child.create_children()
@@ -191,5 +226,7 @@ class VFSEntry:
         return self.size
     
     def calc_all(self):
-        """Meant to be overridden with subclass-specific calculated variables"""
+        """
+        Meant to be overridden with subclass-specific calculated variables
+        """
         self.calc_size()

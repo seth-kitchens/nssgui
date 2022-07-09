@@ -1,11 +1,19 @@
 import PySimpleGUI as sg
+
 from nssgui.style import colors
 from nssgui.ge.gui_element import *
 from nssgui.ge.containers.list_container import ListContainer
 
+
 # Show the contained list as a string
 class StringContainer(ListContainer):
-    def __init__(self, text, ge:GuiElement, folder_browse=False, blank_invalid=False, has_validity=False) -> None:
+    
+    def __init__(self, 
+            text,
+            ge:GuiElement,
+            folder_browse=False,
+            blank_invalid=False,
+            has_validity=False) -> None:
         check_if_instances(ge, [GuiElement, iLength, iEdittable, iStringable])
         super().__init__(ge, GuiElement.layout_types.ROW)
         self.text = text
@@ -51,6 +59,7 @@ class StringContainer(ListContainer):
         if s == None:
             return
         self.ge.load_string(s)
+    
     def _push(self, window):
         self.push_validity(window)
         window[self.keys['In']](self.ge.to_string())
@@ -86,6 +95,7 @@ class StringContainer(ListContainer):
             sg_in.update(background_color = colors.valid)
         else:
             sg_in.update(background_color = colors.invalid)
+    
     def _is_valid(self):
         if self.blank_invalid and not len(self.ge):
             return False

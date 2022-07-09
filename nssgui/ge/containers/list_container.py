@@ -6,6 +6,7 @@ from nssgui.window import AbstractBlockingWindow
 from nssgui.ge.gui_element import *
 
 class ListContainer(GuiElement, ABC):
+    
     def __init__(self, ge:GuiElement, layout_type) -> None:
         check_if_instances(ge, [GuiElement, iLength])
         self.ge = ge
@@ -21,16 +22,21 @@ class ListContainer(GuiElement, ABC):
 
     def _init(self):
         pass
+    
     def _save(self, data):
         pass
+    
     def _load(self, data):
         pass
+    
     @abstractmethod
     def _pull(self, values):
         pass
+    
     @abstractmethod
     def _push(self, window):
         pass
+    
     def _init_window(self, window):
         self.push(window)
     
@@ -41,10 +47,12 @@ class ListContainer(GuiElement, ABC):
         self.add_key('Edit')
     
     class WindowEditContained(AbstractBlockingWindow):
+        
         def __init__(self, title, contained) -> None:
             check_if_instances(contained, [iEdittable])
             self.contained:GuiElement = contained
             super().__init__(title)
+        
         def get_layout(self):
             layout = [*self.contained.get_edit_layout()]
             layout.extend([
@@ -52,6 +60,7 @@ class ListContainer(GuiElement, ABC):
                 [sg.Push(), sg.Ok(size=12), sg.Push()]
             ])
             return layout
+        
         def define_events(self):
             super().define_events()
             self.event_handler(self.contained.handle_event)

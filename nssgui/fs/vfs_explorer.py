@@ -1,6 +1,8 @@
 from nssgui.fs.vfs import VFS
 
+
 class VFSExplorer:
+    
     def __init__(self, vfs, script_data):
         self.current_dir_entry = None
         self.current_dir_children = []
@@ -18,6 +20,7 @@ class VFSExplorer:
         
         def compare_children(e):
             return e.get_included_size()
+        
         folders.sort(key=compare_children, reverse=True)
         files.sort(key=compare_children, reverse=True)
         self.current_dir_children = folders + files
@@ -38,6 +41,7 @@ class VFSExplorer:
             return
         self.current_dir_entry = folder_entry
         self.refresh_current_dir()
+
     def exit_folder(self):
         if self.current_dir_entry == None:
             return
@@ -46,10 +50,7 @@ class VFSExplorer:
         else:
             self.current_dir_entry = self.current_dir_entry.parent
         self.refresh_current_dir()
+
     def exit_to_root(self):
         self.current_dir_entry = None
         self.refresh_current_dir()
-
-        
-
-

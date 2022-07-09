@@ -1,18 +1,26 @@
-from typing import Iterable
 import PySimpleGUI as sg
 
 from nssgui.ge.gui_element import *
 
+
 __all__ = ['CycleButton']
 
+
 class CycleButton(GuiElement):
+
     class display_modes:
         BEFORE_BUTTON_TEXT = 'before_button_text'
         AFTER_BUTTON_TEXT = 'after_button_text'
         BEFORE_LABEL = 'before_label'
         AFTER_LABEL = 'after_label'
 
-    def __init__(self, object_id, options:list[str]|list[str,str]|dict[str,str], label=None, indicator=False, button_text=None, option_display_mode='after_button_text') -> None:
+    def __init__(self,
+            object_id,
+            options:list[str]|list[str,str]|dict[str,str],
+            label=None, 
+            indicator=False,
+            button_text=None,
+            option_display_mode='after_button_text') -> None:
         super().__init__(object_id, GuiElement.layout_types.ROW)
         self.label = label if label != None else ''
         self.button_text = button_text if button_text != None else ''
@@ -22,12 +30,9 @@ class CycleButton(GuiElement):
         self.indicator_border_r = ''
         self.indicator_char_off = '☐'
         self.indicator_char_on = '☒'
-
         self.values = []
         self.v_to_t = {} # value -> text
-
         self.current_index = 0
-
         if isinstance(options[0], str):
             for option in options:
                 self.values.append(option)
@@ -58,13 +63,17 @@ class CycleButton(GuiElement):
 
     def _init(self):
         self.init_sg_kwargs('Button')
+    
     def _save(self, data):
         pass
+    
     def _load(self, data):
         value = data[self.object_id]
         self.set_current_value(value)
+    
     def _pull(self, values):
         pass
+    
     def _push(self, window):
         sge_button = window[self.keys['Button']]
         sge_button.update(self.get_button_text())
@@ -72,6 +81,7 @@ class CycleButton(GuiElement):
         if pre_text:
             sge_label = window[self.keys['Label']]
             sge_label.update(pre_text)
+    
     def _init_window(self, window):
         pass
     
@@ -113,10 +123,13 @@ class CycleButton(GuiElement):
     def set_current_value(self, value):
         index = self.values.index(value)
         self.current_index = index
+    
     def get_current_value(self):
         return self.values[self.current_index]
+    
     def get_current_text(self):
         return self.v_to_t[self.get_current_value()]
+    
     def get_pre_text(self):
         s = ''
         if self.indicator:
@@ -134,6 +147,7 @@ class CycleButton(GuiElement):
                 s += ' '
             s += self.get_current_text()
         return s
+    
     def get_button_text(self):
         s = ''
         if self.option_display_mode == CycleButton.display_modes.BEFORE_BUTTON_TEXT:
@@ -142,6 +156,7 @@ class CycleButton(GuiElement):
         if self.option_display_mode == CycleButton.display_modes.AFTER_BUTTON_TEXT:
             s += self.get_current_text()
         return s
+    
     def get_imminent_value(self):
         i_imminent = (self.current_index + 1) % len(self.values)
         return self.values[i_imminent]

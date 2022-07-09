@@ -3,13 +3,16 @@ from abc import ABC, abstractmethod
 import re
 
 import PySimpleGUI as sg
+
 from nssgui.event_handling import WRC
 from nssgui.ge.gui_element import *
 from nssgui.popup import popups
 from nssgui.data.ordered_dict import OrderedDict
 from nssgui import sg as nss_sg
 
+
 __all__ = ['DetailList']
+
 
 def clone_string_unique(s, not_in_strings=None):
     if not_in_strings == None:
@@ -24,9 +27,14 @@ def clone_string_unique(s, not_in_strings=None):
         i += 1
     return s + str(i)
 
-# An abstract class representing an edittable dict: item_dict:dict[item:str, data:Any]
+
 class DetailList(GuiElement, iLength, ABC):
+    
     def __init__(self, object_id, lstrip=' \n', rstrip=' \n'):
+        """
+        An abstract class representing an edittable dict: 
+            item_dict:dict[item:str, data:Any]
+        """
         super().__init__(object_id, GuiElement.layout_types.LAYOUT)
         self.lstrip = lstrip
         self.rstrip = rstrip
@@ -68,7 +76,10 @@ class DetailList(GuiElement, iLength, ABC):
             row_buttons_main_bottom
         ])
         column_right = sg.Column(expand_x=True, layout=[
-            [sg.Multiline('', key=self.keys['Details'], size=(50, 7), expand_x=True, disabled=True)],
+            [
+                sg.Multiline('',
+                    key=self.keys['Details'], size=(50, 7), expand_x=True, disabled=True)
+            ],
             [
                 column_buttons_main,
                 sg.Push()
@@ -102,17 +113,21 @@ class DetailList(GuiElement, iLength, ABC):
     
     def _init(self):
         pass
+    
     def _save(self, data):
         d = {}
         for k, v in self.item_dict.to_pairs():
             d[k] = self.pack_data(v)
         data[self.object_id] = d
+    
     def _pull(self, values):
         pass
+    
     def _load(self, data):
         self.item_dict.clear()
         for k, v in data[self.object_id].items():
             self.item_dict[k] = self.unpack_data(v)
+    
     def _push(self, window):
         highlighted = [self.selection] if self.selection else []
         sge_listbox:sg.Listbox = window[self.keys['Listbox']]
@@ -123,6 +138,7 @@ class DetailList(GuiElement, iLength, ABC):
         else:
             sge_listbox.set_right_click_menu(self.right_click_menus['ListboxNone'].get_def())
         self.update_details(window)
+    
     def _init_window(self, window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.push(window)
@@ -162,7 +178,10 @@ class DetailList(GuiElement, iLength, ABC):
         @self.eventmethod(self.keys['Listbox'])
         def event_listbox(context):
             sge_listbox = context.window[self.keys['Listbox']]
-            is_double_click = (not sge_listbox.is_right_click()) and self.check_double_click('Listbox')
+            is_double_click = False
+            if not sge_listbox.is_right_click():
+                if self.check_double_click('Listbox'):
+                    is_double_click = True
             selections = context.values[self.keys['Listbox']]
             if not len(selections):
                 return
@@ -198,7 +217,8 @@ class DetailList(GuiElement, iLength, ABC):
         def event_rename(context):
             if not self.selection:
                 return
-            item = popups.edit_string(context, '', title='Rename', body_text=['Previous: "' + self.selection + '"'])
+            item = popups.edit_string(context, '', 
+                title='Rename', body_text=['Previous: "' + self.selection + '"'])
             item = item.lstrip(self.lstrip).rstrip(self.rstrip)
             if not item:
                 return
@@ -239,7 +259,9 @@ class DetailList(GuiElement, iLength, ABC):
             if not item:
                 return
             if item in self.item_dict.key_list:
-                popups.ok(context, 'Entry of name "' + item + '" already exists.', title='Entry Exists')
+                popups.ok(context, 
+                    text='Entry of name "{}" already exists.'.format(item),
+                    title='Entry Exists')
                 return
             rv, data = self.edit_data(context, item, None)
             if not rv.check_success():
@@ -343,6 +365,7 @@ class DetailList(GuiElement, iLength, ABC):
     
     def get_pairs(self):
         return self.item_dict.to_pairs()
+    
     def get_dict(self):
         return dict(self.item_dict.to_pairs())
 

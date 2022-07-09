@@ -5,6 +5,7 @@ import PySimpleGUI as sg
 
 from nssgui.data.ordered_dict import OrderedDict
 
+
 __all__ = [
     'EventManager',
     'EventLoop',
@@ -12,8 +13,8 @@ __all__ = [
     'WRC',
     'NULL_EVENT'
 ]
-
 NULL_EVENT = 'NULL_EVENT'
+
 
 def get_func_location(func):
         file = inspect.getfile(func)
@@ -23,16 +24,19 @@ def get_func_location(func):
             lineno = -1
         return file, lineno
 
+
 class Callback:
+
     def __init__(self):
         self.func:function = None
         self.dbginfo:list = []
+
     def dbg_location(self, file, lineno):
         location = 'Callback defined at "{}":{}'.format(file, lineno)
         self.dbginfo.append(location)
+    
     def get_info(self):
         return 'Callback:\n    ' + '\n    '.join(self.dbginfo)
-
 
     @classmethod
     def event(cls, func):
@@ -42,6 +46,7 @@ class Callback:
         cb.dbg_location(file, lineno)
         return cb
     event_handler = event
+
     @classmethod
     def event_value(cls, value):
         cb = cls()
@@ -54,8 +59,8 @@ class Callback:
         return cb
 
 
-
 class WindowReturnCode:
+
     NONE = 0
     EXIT = 1 << 0
     CLOSE = 1 << 1
@@ -64,7 +69,6 @@ class WindowReturnCode:
     _MIN = 0
     _MAX = SUCCESS
     _SUM = _MAX * 2 - 1
-
 
     def __init__(self, value:WindowReturnCode|int|None=NONE, dbginfo=None):
         self.value = self.NONE
@@ -82,33 +86,29 @@ class WindowReturnCode:
             self.value = self.NONE
         self.propagate()
         return self
-    
 
     def propagate(self):
-        """Flip additional flags automatically based on current flags flipped."""
+        """
+        Flip additional flags automatically based on current flags flipped.
+        """
         if self.value & self.EXIT:
             self.value |= self.CLOSE
-
     
     @classmethod
     def none(cls):
         return WRC(WRC.NONE)
-
     
     @classmethod
     def exit(cls):
         return WRC(WRC.EXIT)
 
-
     @classmethod
     def close(cls):
         return WRC(WRC.CLOSE)
 
-    
     @classmethod
     def success(cls):
         return WRC(WRC.SUCCESS)
-
     
     def check_none(self):    return bool(self.value == self.NONE)
     def check_exit(self):    return bool(self.value &  self.EXIT)
@@ -130,7 +130,10 @@ class WindowReturnCode:
     
     @classmethod
     def check_valid_int(cls, v:int, info=None) -> int:
-        """Verify that 'v' is a valid WRC value. Returns v, converting to WRC.NONE if None"""
+        """
+        Verify that 'v' is a valid WRC value.
+        Returns v, converting to WRC.NONE if None
+        """
         info = '\nDebug info: {}'.format(info) if info != None else ''
         if not isinstance(v, int):
             raise ValueError('Value is not an int' + info)
@@ -150,11 +153,11 @@ class WindowReturnCode:
         for flag in flags:
             self.value = self.value & ~flag
         self.propagate()
-
 WRC = WindowReturnCode
 
 
 class EventManager:
+
     def __init__(self, debug_id:str=None):
         self._callbacks_events_handlers:list[Callback] = []
         self._callbacks_events:dict[str, Callback] = {}
@@ -166,17 +169,14 @@ class EventManager:
         em._callbacks_events_handlers = self._callbacks_events_handlers.copy()
         em._callbacks_events = self._callbacks_events.copy()
         return em
-    
 
     ###
-
 
     def event_method(self, func, *events):
         """func: func(WindowContext)"""
         callback = Callback.event(func)
         for event in events:
             self._callbacks_events[event] = callback
-    
 
     def event_handler(self, func):
         callback = Callback.event_handler(func)
@@ -187,16 +187,13 @@ class EventManager:
         callback = Callback.event_value(value)
         for event in events:
             self._callbacks_events[event] = callback
-    
 
     def event_after(self, func, after_secs:float):
         callback = Callback.event(func)
         at_time = time.time() + after_secs
         self._callbacks_timed_events.insert_before_if(lambda k, v: at_time < k, at_time, callback)
-    
 
     ###
-    
 
     def eventmethod(self, *events):
         """
@@ -215,28 +212,24 @@ class EventManager:
             return f
         return wrap
     
-    
     def eventhandler(self):
         def wrap(f):
             self.event_handler(f)
             return f
         return wrap
 
-
     ###
-
 
     def event_value_close_success(self, *events):   self.event_value(WRC.CLOSE | WRC.SUCCESS,    *events)
     def event_value_close(self, *events):           self.event_value(WRC.CLOSE,                  *events)
     def event_value_exit(self, *events):            self.event_value(WRC.EXIT,                   *events)
 
-
     ###
-    
 
     def handle_event(self, context) -> WRC:
         for callback in self._callbacks_events_handlers:
-            rv = WRC(callback.func(context), 'EventHandler ' + callback.get_info())
+            rv = WRC(
+                callback.func(context), 'EventHandler ' + callback.get_info())
             if rv.check_close():
                 return rv
         if context.event in self._callbacks_events.keys():
@@ -248,7 +241,8 @@ class EventManager:
     
     def handle_timed_events(self, context):
         current_time = time.time()
-        ready = self._callbacks_timed_events.pop_front_if(lambda k, v : k < current_time)
+        ready = self._callbacks_timed_events.pop_front_if(
+            lambda k, v : k < current_time)
         for _, cb in ready:
             rv = WRC(cb.func(context))
             if rv.check_close():
@@ -257,6 +251,7 @@ class EventManager:
     
 
 class EventLoop:
+
     def __init__(self, em:EventManager=None):
         self.em = em
         self.em.debug_id = 'EventLoop' + self.em.debug_id
@@ -268,7 +263,6 @@ class EventLoop:
         self._callbacks_push = []
         self.final_event = NULL_EVENT
         self.final_values = None
-    
 
     def updatecallback(self):
         def wrap(f):
@@ -276,7 +270,6 @@ class EventLoop:
             return f
         return wrap
     
-
     def savecallback(self, func, data):
         """func(data)"""
         def f():
@@ -284,32 +277,27 @@ class EventLoop:
         self._callbacks_save.append(f)
         return self
     
-
     def loadcallback(self, func, data):
         """func(data)"""
         def f():
             func(data)
         self._callbacks_load.append(f)
         return self
-
     
     def pullcallback(self, func):
         """func(values)"""
         self._callbacks_pull.append(func)
         return self
 
-
     def pushcallback(self, func):
         """func(window)"""
         self._callbacks_push.append(func)
         return self
 
-
     def initwindowcallback(self, func):
         """func(window)"""
         self._callbacks_init_window.append(func)
         return self
-    
 
     def run(self, context, read_time=None) -> WRC:
         """Calls all pull and save functions if bool(returned value) == True.
@@ -349,7 +337,8 @@ class EventLoop:
             if is_win_closed:
                 print('Failed to catch WIN_CLOSED event.')
                 print('Events: {}'.format(self.em._callbacks_events))
-                print('EventHandlers: {}'.format(self.em._callbacks_events_handlers))
+                print('EventHandlers: {}'.format(
+                    self.em._callbacks_events_handlers))
                 break
         context.window.close()
         if rv.check_success():
@@ -358,9 +347,12 @@ class EventLoop:
             for cb in self._callbacks_save:
                 cb()
         self.final_event = context.event
-        self.final_values = context.values.copy() if context.values != None else None
+        if context.values == None:
+            self.final_values = None
+        else:
+            self.final_values = context.values.copy()
         return rv
-    
 
     def run_timed(self, context) -> WRC:
         return self.run(context, read_time=50)
+        

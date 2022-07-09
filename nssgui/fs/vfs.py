@@ -1,6 +1,7 @@
 from nssgui.fs.vfs_entry import VFSEntry
 
 class VirtualFS:
+
     def __init__(self):
         self.root_entries = {}
         self.all_entries = {}
@@ -28,5 +29,4 @@ class VirtualFS:
     
     def get_root_file_count(self):
         return len(self.for_roots(VFSEntry.is_file))
-
 VFS = VirtualFS

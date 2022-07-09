@@ -1,6 +1,7 @@
 import os
 
 import PySimpleGUI as sg
+
 from nssgui.text import utils as text_utils
 from nssgui.data import units as unit
 from nssgui.fs.vfs import VFS
@@ -13,9 +14,12 @@ from nssgui import g as nss_g
 from nssgui import ge as nss_el
 from nssgui import sg as nss_sg
 
+
 __all__ = ['VFSExplorerView']
 
+
 class VFSExplorerView(GuiElement):
+    
     def __init__(self, object_id, vfs_explorer, read_only=False) -> None:
         self.read_only = read_only
         super().__init__(object_id, GuiElement.layout_types.LAYOUT)
@@ -36,28 +40,40 @@ class VFSExplorerView(GuiElement):
             layout.append(row_actions)
         return layout
 
-    nav_button_kwargs = {
+    _nav_button_kwargs = {
         'size': (5, 4),
         'expand_y': True
     }
+
     def _get_row_current_path(self):
         row_current_path = [
             sg.Sizer(6, 0),
             sg.Text('Current'),
             sg.Sizer(5, 0),
-            *self.row(nss_el.Input(self.keys['CurrentPath'], '').set_sg_kwargs('In', readonly=True, expand_x=True).init_data('""'))
+            *self.row(nss_el.Input(self.keys['CurrentPath'], '') \
+                .set_sg_kwargs('In', readonly=True, expand_x=True) \
+                .init_data('""'))
         ]
         return row_current_path
+    
     def _get_row_details(self):
-        button_root_folder = sg.Button('Root', key=self.keys['ExitToRoot'], **self.nav_button_kwargs)
+        button_root_folder = sg.Button('Root',
+            key=self.keys['ExitToRoot'], **self._nav_button_kwargs)
         row_details = [
             sg.Column(layout=[[button_root_folder]]),
-            sg.Multiline(key=self.keys['Details'], size=(nss_g.explorer_list_width, 5), expand_x=True, disabled=True)
+            sg.Multiline(
+                key=self.keys['Details'], 
+                size=(nss_g.explorer_list_width, 5),
+                expand_x=True,
+                disabled=True)
         ]
         return row_details
+    
     def _get_row_listbox(self):
-        button_open_folder = sg.Button('>>>>\n\nOpen\n\n>>>>', key=self.keys['OpenFolder'], **self.nav_button_kwargs)
-        button_exit_folder = sg.Button('<<<<\n\nBack\n\n<<<<', key=self.keys['ExitFolder'], **self.nav_button_kwargs)
+        button_open_folder = sg.Button('>>>>\n\nOpen\n\n>>>>',
+            key=self.keys['OpenFolder'], **self._nav_button_kwargs)
+        button_exit_folder = sg.Button('<<<<\n\nBack\n\n<<<<', 
+            key=self.keys['ExitFolder'], **self._nav_button_kwargs)
         column_nav_buttons = sg.Column(expand_x=True, expand_y=True, layout=[
             [button_open_folder],
             [button_exit_folder]
@@ -80,6 +96,7 @@ class VFSExplorerView(GuiElement):
             sge_item_list
         ]
         return row_listbox
+    
     def get_layout_explorer(self):
         row_current_path = self._get_row_current_path()
         row_details = self._get_row_details()
@@ -90,16 +107,21 @@ class VFSExplorerView(GuiElement):
             row_listbox,
         ]
         return layout
+    
     def _get_row_actions(self):
         control_button_kwargs = {
             'size': (10, 1)
         }
         row = [
             sg.Sizer(65, 0),
-            sg.Button('Add Folder', key=self.keys['AddFolder'], **control_button_kwargs),
-            sg.Button('Add Files', key=self.keys['AddFiles'], **control_button_kwargs),
-            sg.Button('Remove', key=self.keys['Remove'], **control_button_kwargs),
-            sg.Button('Remove All', key=self.keys['RemoveAll'], **control_button_kwargs)
+            sg.Button('Add Folder',
+                key=self.keys['AddFolder'], **control_button_kwargs),
+            sg.Button('Add Files',
+                key=self.keys['AddFiles'], **control_button_kwargs),
+            sg.Button('Remove',
+                key=self.keys['Remove'], **control_button_kwargs),
+            sg.Button('Remove All',
+                key=self.keys['RemoveAll'], **control_button_kwargs)
         ]
         return row
 
@@ -107,12 +129,16 @@ class VFSExplorerView(GuiElement):
     
     def _init(self):
         pass
+    
     def _save(self, data):
         pass
+    
     def _load(self, data):
         pass
+    
     def _pull(self, values):
         pass
+    
     def _push(self, window):
         self.update_rcm(window)
         self.vfs_explorer.refresh_current_dir()
@@ -121,7 +147,6 @@ class VFSExplorerView(GuiElement):
         else:
             entry_details = ''
         window[self.keys['Details']](entry_details)
-
         if self.vfs_explorer.current_dir_entry == None:
             current_path = ''
         else:
@@ -131,6 +156,7 @@ class VFSExplorerView(GuiElement):
         window[self.keys['Listbox']](self.get_display_list())
         if self.selection:
             window[self.keys['Listbox']].set_value(self.selected_row)
+    
     def _init_window(self, window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.vfs_explorer.refresh_current_dir()
@@ -147,7 +173,8 @@ class VFSExplorerView(GuiElement):
         disable_tags = []
         if self.read_only:
             disable_tags.append('read_only')
-        window[self.keys['Listbox']].set_right_click_menu(rcm.get_def(disable_tags=disable_tags))
+        rcm_def = rcm.get_def(disable_tags=disable_tags)
+        window[self.keys['Listbox']].set_right_click_menu(rcm_def)
     
     # Keys and Events
     
@@ -183,10 +210,14 @@ class VFSExplorerView(GuiElement):
     
     def define_events(self):
         super().define_events()
+        
         @self.eventmethod(self.keys['Listbox'])
         def event_listbox(context):
             sge_listbox = context.window[self.keys['Listbox']]
-            is_double_click = (not sge_listbox.is_right_click()) and self.check_double_click('Listbox')
+            is_double_click = False
+            if not sge_listbox.is_right_click():
+                if self.check_double_click('Listbox'):
+                    is_double_click = True
             item_list = context.values[self.keys['Listbox']]
             if len(item_list) <= 0:
                 return
@@ -271,8 +302,6 @@ class VFSExplorerView(GuiElement):
             self.vfs_explorer.refresh_current_dir()
             self.deselect()
             self.push(context.window)
-    
-    # Other
 
     ### VFSExplorerView
 
@@ -287,7 +316,9 @@ class VFSExplorerView(GuiElement):
             s += 'Folder'
         else:
             s += 'File'
-        s += '\nSize: ' + unit.Bytes(entry.size, degree_name=unit.Bytes.BYTE).get_best()
+        size_best = unit.Bytes(entry.size, degree_name=unit.Bytes.BYTE) \
+            .get_best()
+        s += '\nSize: ' + size_best
         return s
 
     def refresh_display_list(self):
@@ -296,7 +327,10 @@ class VFSExplorerView(GuiElement):
             return
         i = 1
         display_table = TableList()
-        display_table.add_row(['#', 'Typ', 'Name', 'Status', 'Inc Size', 'Exc Size', 'I-F', 'I-f', 'E-F', 'E-f'])
+        display_table.add_row([
+            '#', 'Typ', 'Name', 'Status', 'Inc Size',
+            'Exc Size', 'I-F', 'I-f', 'E-F', 'E-f'
+        ])
         for child in self.vfs_explorer.current_dir_children:
             i_size_value, i_size_symbol = unit.Bytes(int(child.get_included_size()), unit.Bytes.B).find_best(0.1)
             e_size_value, e_size_symbol = unit.Bytes(int(child.get_excluded_size()), unit.Bytes.B).find_best(0.1)

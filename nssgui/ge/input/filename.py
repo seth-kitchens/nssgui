@@ -1,9 +1,10 @@
-import os
-
 import PySimpleGUI as sg
+
 from nssgui.ge.gui_element import *
 
+
 class Filename(GuiElement):
+
     def __init__(self, object_id, text) -> None:
         super().__init__(object_id, GuiElement.layout_types.ROW)
         self.text = text
@@ -27,17 +28,22 @@ class Filename(GuiElement):
     def _init(self):
         self.init_sg_kwargs('Name')
         self.init_sg_kwargs('Extension', size=(6, 1))
+
     def _save(self, data):
         data[self.object_id] = [self.name, self.extension]
+
     def _load(self, data):
         self.name = data[self.object_id][0]
         self.extension = data[self.object_id][1]
+
     def _pull(self, values):
         self.name = values[self.keys['Name']]
         self.extension = values[self.keys['Extension']]
+
     def _push(self, window):
         window[self.keys['Name']](self.name)
         window[self.keys['Extension']](self.extension)
+
     def _init_window(self, window):
         self.push(window)
     
@@ -55,6 +61,7 @@ class Filename(GuiElement):
     
     def sg_kwargs_name(self, **kwargs):
         return self.set_sg_kwargs('Name', **kwargs)
+
     def sg_kwargs_extension(self, **kwargs):
         return self.set_sg_kwargs('Extension', **kwargs)
     
@@ -62,6 +69,7 @@ class Filename(GuiElement):
 
     def get_filename(self, values):
         return values[self.keys['Name']] + values[self.keys['Name']]
+
     def update(self, window, name=None, extension=None):
         if name != None:
             self.name = name

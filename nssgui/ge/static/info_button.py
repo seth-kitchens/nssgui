@@ -1,12 +1,19 @@
 import PySimpleGUI as sg
-from nssgui.data.info_def import InfoBuilder
 
+from nssgui.data.info_def import InfoBuilder
 from nssgui.ge.gui_element import *
-from nssgui.popup import PopupBuilder
 from nssgui import sg as nss_sg
 
+
 class InfoButton(GuiElement):
-    def __init__(self, object_id, text='Info', info_def:InfoBuilder=None, title='Info', header=None, subheader=None) -> None:
+
+    def __init__(self,
+            object_id,
+            text='Info',
+            info_def:InfoBuilder=None,
+            title='Info', 
+            header=None, 
+            subheader=None) -> None:
         super().__init__(object_id, GuiElement.layout_types.SGE)
         self.text = text
         self.info_def = info_def
@@ -27,14 +34,19 @@ class InfoButton(GuiElement):
 
     def _init(self):
         self.init_sg_kwargs('Info')
+
     def _save(self, data):
         pass
+
     def _load(self, data):
         pass
+
     def _pull(self, values):
         pass
+
     def _push(self, window):
         pass
+
     def _init_window(self, window):
         pass
     
@@ -64,6 +76,7 @@ class InfoButton(GuiElement):
 
 button_size = nss_sg.button_size
 
+
 def Info(gem, info_def:str|InfoBuilder, button_text=None, header=None, subheader=None, bt=None, sg_kwargs=None):
     if isinstance(info_def, str):
         info_def = InfoBuilder().text(info_def)
@@ -73,8 +86,7 @@ def Info(gem, info_def:str|InfoBuilder, button_text=None, header=None, subheader
         if bt:
             button_text = bt
         else:
-            button_text = '?'
-    
+            button_text = '?'    
     key = gem.gem_key(info_def.get_all_text())
     ge = InfoButton(object_id=key, text=button_text, info_def=info_def, header=header, subheader=subheader)
     if not sg_kwargs:

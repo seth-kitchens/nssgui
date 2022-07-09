@@ -1,9 +1,12 @@
 import PySimpleGUI as sg
+
 from nssgui.ge.gui_element import *
 from nssgui.ge.containers.list_container import ListContainer
 
+
 # show the count of the contained list
 class CountContainer(ListContainer):
+    
     def __init__(self, text, ge:GuiElement) -> None:
         check_if_instances(ge, [GuiElement, iLength])
         super().__init__(ge, GuiElement.layout_types.ROW)
@@ -25,6 +28,7 @@ class CountContainer(ListContainer):
 
     def _pull(self, values):
         pass
+    
     def _push(self, window):
         window[self.keys['Count']](str(len(self.ge)))
     

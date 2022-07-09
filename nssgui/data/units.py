@@ -2,6 +2,7 @@ from math import floor, log10
 
 from nssgui.text.utils import center_decimal_string
 
+
 # based on https://stackoverflow.com/questions/3410976
 def round_to_n(x, n):
     if x < 0:
@@ -10,22 +11,26 @@ def round_to_n(x, n):
         return 0
     return round(x, -int(floor(log10(x))) + (n - 1))
 
+
 class Degree:
+    
     def __init__(self, name, symbol, power=None) -> None:
         self.name = name
         self.symbol = symbol
         self.power = power
         self.conversions = {} # name -> conversion
         self.connections = {} # name -> degree
+    
     def convert_to(self, value, name):
         return value * self.conversions[name]
+    
     def add_conversion(self, degree, conversion, do_two_way=True):
         self.conversions[degree.name] = conversion
         self.connections[degree.name] = degree
         if do_two_way:
-            #print('adding conversion of (1 / ' + str(conversion) + ')')
             degree.conversions[self.name] = (1 / conversion)
             degree.connections[self.name] = self
+    
     def find_conversion(self, name_to, visited=None, current=1):
         if not visited:
             visited = set()
@@ -33,26 +38,31 @@ class Degree:
             return 0
         visited.add(self.name)
         for name, conversion in self.conversions.items():
-            #print('current: ' + str(current) + ', conversion: ' + str(conversion))
             next_conversion = current * conversion
             if name == name_to:
                 return next_conversion
             degree = self.connections[name]
-            found_conversion = degree.find_conversion(name_to, visited.copy(), next_conversion)
+            found_conversion = degree.find_conversion(
+                name_to, visited.copy(), next_conversion)
             if found_conversion:
                 return found_conversion
         return 0
+    
     def find_and_add(self, degree):
         if degree.name in self.conversions.keys():
             return
         conversion = self.find_conversion(degree.name)
         self.add_conversion(degree, conversion)
+    
     def print(self):
         print('Degree: ' + self.name)
         print('  conversions: ' + str(self.conversions))
 
+
 class UnitScale:
+    
     unit_scales = {}
+    
     def __init__(self, unit_name, base_degree, interval=None):
         self.name = unit_name
         self.base_degree = base_degree
@@ -64,37 +74,37 @@ class UnitScale:
         self.symbols_by_name[base_degree.name] = base_degree.symbol
         self.interval = interval
         self.is_power = bool(interval)
-        return
+    
     def get_degree_by_name(self, name):
         return self.degrees_by_name[name]
+    
     def get_degree_by_symbol(self, symbol):
         return self.degrees_by_symbol[symbol]
+    
     def get_symbol_by_name(self, name):
         return self.symbols_by_name[name]
+    
     def get_name_by_symbol(self, symbol):
         for n, s in self.symbols_by_name.items():
             if symbol == s:
                 return n
         return None
+    
     def add_degree(self, degree):
         self.degrees_by_name[degree.name] = degree
         self.degrees_by_symbol[degree.symbol] = degree
         self.symbols_by_name[degree.name] = degree.symbol
-        return
+    
     def define_power(self, degree):
         self.add_degree(degree)
+    
     def connect_all(self):
-        #print()
-        #self.print_degrees()
         for n1, d1 in self.degrees_by_name.items():
             for n2, d2 in self.degrees_by_name.items():
                 if n1 == n2:
                     continue
-                #print('n1: ' + str(n1) + ', n2: ' + str(n2))
                 d1.find_and_add(d2)
-        #print('--- connecting ---')
-        #self.print_degrees()
-        return
+
     def define_interval(self, degree_from, degree_to, interval):
         name_from = degree_from.name
         name_to = degree_to.name
@@ -104,7 +114,7 @@ class UnitScale:
             self.add_degree(degree_to)
         degree_from.add_conversion(degree_to, interval)
         self.connect_all()
-        return
+
     def convert_degree(self, value, d1_name, d2_name):
         if self.is_power:
             result = value
@@ -122,10 +132,11 @@ class UnitScale:
             d1 = self.degrees_by_name[d1_name]
             result = d1.convert_to(value, d2_name)
         return result
+    
     def print_degrees(self):
-        #print('UnitScale: ' + self.name)
         for d in self.degrees_by_name.values():
             d.print()
+    
     def strip_s_if_singular(self, symbol, value, decimal_digits=2):
         if round(value, decimal_digits) == 1:
             degree_name = self.get_name_by_symbol(symbol)
@@ -133,9 +144,16 @@ class UnitScale:
                 return degree_name
         return symbol
 
+
 class Unit:
+    
     unit_scale:UnitScale = None
-    def __init__(self, value, degree_name=None, degree_symbol=None, degree_power=None) -> None:
+    
+    def __init__(self,
+            value,
+            degree_name=None,
+            degree_symbol=None,
+            degree_power=None) -> None:
         if not self.unit_scale:
             self._create_unit_scale()
         self.value = value
@@ -153,25 +171,33 @@ class Unit:
     def copy_from_unit(self, unit):
         self.value = unit.value
         self.degree = unit.degree
+    
     def set_value(self, value):
         self.value = value
+    
     def get_degree_from_any(self, degree_name=None, degree_symbol=None):
         if degree_name:
             degree = self.unit_scale.get_degree_by_name(degree_name)
         elif degree_symbol:
             degree = self.unit_scale.get_degree_by_symbol(degree_symbol)
         return degree
+    
     def set_degree(self, degree_name=None, degree_symbol=None):
         degree = self.get_degree_from_any(degree_name, degree_symbol)
         self.degree = degree
+    
     def get_value(self):
         return self.value
+    
     def get_degree_name(self):
         return self.degree.name
+    
     def get_degree_symbol(self):
         return self.degree.symbol
+    
     def get_names(self):
         return list(self.unit_scale.degrees_by_name.keys())
+    
     def get_symbols(self):
         return list(self.unit_scale.degrees_by_symbol.keys())
     
@@ -179,21 +205,28 @@ class Unit:
         degree = self.get_degree_from_any(degree_name, degree_symbol)
         if degree.name == self.degree.name:
             return
-        self.value = self.unit_scale.convert_degree(self.value, self.degree.name, degree.name)
+        self.value = self.unit_scale.convert_degree(
+            self.value, self.degree.name, degree.name)
         self.degree = self.unit_scale.get_degree_by_name(degree.name)
+    
     def get_as_name(self, name):
         if name == self.degree.name:
             return self.value
         degree = self.unit_scale.get_degree_by_name(name)
-        return self.unit_scale.convert_degree(self.value, self.degree.name, degree.name)
+        return self.unit_scale.convert_degree(
+            self.value, self.degree.name, degree.name)
+    
     def get_as_symbol(self, symbol):
         if symbol == self.degree.symbol:
             return self.value
         degree = self.unit_scale.get_degree_by_symbol(symbol)
-        return self.unit_scale.convert_degree(self.value, self.degree.name, degree.name)
+        return self.unit_scale.convert_degree(
+            self.value, self.degree.name, degree.name)
+    
     def print_as_symbol(self, symbol):
         value = self.get_as_symbol(symbol)
         print(str(value) + ' ' + symbol)
+    
     def find_best_accurate(self, accuracy=3):
         as_each_degree = {}
         for symbol in self.unit_scale.degrees_by_symbol.keys():
@@ -219,7 +252,8 @@ class Unit:
             # must compare equal to original with rounding accuracy
             name = self.unit_scale.get_name_by_symbol(symbol)
             rounded_value = round_to_n(value, accuracy)
-            converted_back = self.unit_scale.convert_degree(rounded_value, name, self.degree.name)
+            converted_back = self.unit_scale.convert_degree(
+                rounded_value, name, self.degree.name)
             if not round_to_n(converted_back, accuracy) == rounded_original:
                 continue
 
@@ -243,12 +277,14 @@ class Unit:
                 continue
 
         return best_vs
+    
     def find_best(self, minimum=0.5) -> tuple[str, str]:
         as_each_degree = {}
         for symbol in self.unit_scale.degrees_by_symbol.keys():
             as_each_degree[symbol] = self.get_as_symbol(symbol)
         best_vs = (self.value, self.degree.symbol)
         for symbol, value in as_each_degree.items():
+        
             # at least {minimum} is better
             enough_value = (value >= minimum)
             enough_best = (best_vs[0] >= minimum)
@@ -268,6 +304,7 @@ class Unit:
                 continue
 
         return best_vs
+    
     def get_best(self, decimal_digits=2, minimum=0.5, sep=' ') -> str:
         value, symbol = self.find_best(minimum)
         if decimal_digits:
@@ -277,7 +314,12 @@ class Unit:
         if value:
             value_string = value_string.rstrip('0').rstrip('.')
         return value_string + sep + symbol
-    def get_best_accurate(self, accuracy=3, do_round=True, center_decimal=False, sep=' ') -> str:
+    
+    def get_best_accurate(self,
+            accuracy=3,
+            do_round=True,
+            center_decimal=False,
+            sep=' ') -> str:
         value, symbol = self.find_best_accurate(accuracy)
         if do_round:
             value = round_to_n(value, accuracy)
@@ -288,17 +330,21 @@ class Unit:
         if value:
             value_string = value_string.rstrip('0').rstrip('.')
         return value_string + sep + symbol
+    
     def print_best(self):
         print(self.get_best())
+    
     def convert_to_best(self, minimum=1.0):
         value, symbol = self.find_best(minimum)
         self.convert_to_degree(degree_symbol=symbol)
+    
     def convert_to_best_accurate(self, accuracy=3):
         value, symbol = self.find_best_accurate(accuracy)
         self.convert_to_degree(degree_symbol=symbol)
 
 
 class TimeStandard(Unit):
+    
     SECOND = 'second'
     MINUTE = 'minute'
     HOUR = 'hour'
@@ -307,8 +353,13 @@ class TimeStandard(Unit):
     MONTH = 'month'
     YEAR = 'year'
 
-    def __init__(self, value, degree_name=None, degree_symbol=None, degree_power=None) -> None:
+    def __init__(self,
+            value,
+            degree_name=None,
+            degree_symbol=None,
+            degree_power=None) -> None:
         super().__init__(value, degree_name, degree_symbol, degree_power)
+    
     def _create_unit_scale(self):
         unit_name = 'time'
 
@@ -327,43 +378,37 @@ class TimeStandard(Unit):
         unit_scale.define_interval(degree_week, degree_day, 7)
         unit_scale.define_interval(degree_year, degree_day, 365.25)
         unit_scale.define_interval(degree_year, degree_month, 12)
+
         TimeStandard.unit_scale = unit_scale
-        #unit_scale.print_degrees()
 Time = TimeStandard
 
+
 class DataBytes(Unit):
+
     BYTE = B = 'byte'
     KILOBYTE = KB = 'kilobyte'
     MEGABYTE = MB = 'megabyte'
     GIGABYTE = GB = 'gigabyte'
     TERABYTE = TB = 'terabyte'
-    def __init__(self, value, degree_name=None, degree_symbol=None, degree_power=None) -> None:
+
+    def __init__(self,
+            value,
+            degree_name=None,
+            degree_symbol=None,
+            degree_power=None) -> None:
         super().__init__(value, degree_name, degree_symbol, degree_power)
+    
     def _create_unit_scale(self):
         unit_name = 'bytes'
         interval = 1024
         degree_byte = Degree(DataBytes.BYTE, 'B', 0)
+        
         unit_scale = UnitScale(unit_name, degree_byte, interval)
         unit_scale.define_power(Degree(DataBytes.KILOBYTE, 'KB', 1))
         unit_scale.define_power(Degree(DataBytes.MEGABYTE, 'MB', 2))
         unit_scale.define_power(Degree(DataBytes.GIGABYTE, 'GB', 3))
         unit_scale.define_power(Degree(DataBytes.TERABYTE, 'TB', 4))
+        
         DataBytes.unit_scale = unit_scale
-        #unit_scale.print_degrees()
 Data = DataBytes
 Bytes = DataBytes
-
-def test():
-    size = DataBytes(5, 'MB')
-    size.print_as_symbol('MB')
-    size.print_as_symbol('KB')
-    size.print_as_symbol('B')
-
-    time = TimeStandard(1, 'years')
-    time.print_as_symbol('years')
-    time.print_as_symbol('months')
-    time.print_as_symbol('weeks')
-    time.print_as_symbol('days')
-    time.print_as_symbol('hours')
-    time.print_as_symbol('mins')
-    time.print_as_symbol('secs')

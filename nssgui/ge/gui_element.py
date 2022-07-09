@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import time
 from functools import wraps
 
 import PySimpleGUI as sg
+
 from nssgui import g as nss_g
-from nssgui.event_handling import WRC, EventManager, EventLoop
+from nssgui.event_handling import WRC, EventManager
 from nssgui.sg.utils import MenuDict
+
 
 __all__ = [
     'check_if_instances',
@@ -19,10 +22,12 @@ __all__ = [
     'initafter'
 ]
 
+
 def check_if_instances(obj, types:list):
     for t in types:
         if not isinstance(obj, t):
             raise TypeError('Obj ' + str(obj) + ' is not an instance of ' + str(t))
+
 def check_if_subclasses(name, types:list):
     for t in types:
         if not issubclass(name, t):
@@ -37,6 +42,7 @@ class iStringable(ABC):
     @abstractmethod
     def to_string(self):
         pass
+
     @abstractmethod
     def load_string(self, s):
         pass
@@ -46,6 +52,7 @@ class iEdittable(ABC):
     @abstractmethod
     def get_edit_layout(self):
         pass
+
     @abstractmethod
     def handle_event(self, context):
         pass
@@ -68,8 +75,10 @@ def initafter(f):
 # GuiElement Manager
 
 class GuiElementManager:
+
     num_gems = 0
     num_gem_keys = 0
+
     def __init__(self):
         self.gem_id = GuiElementManager.num_gems
         GuiElementManager.num_gems += 1
@@ -77,10 +86,13 @@ class GuiElementManager:
         self.gem_keys = {}
 
         self.status_bar_key = None
+
     def __getitem__(self, key):
         return self.ges[key]
+
     def __setitem__(self, key, value):
         self.ges[key] = value
+
     def add_ge(self, ge, do_overwrite=False):
         id = ge.object_id
         if do_overwrite or not id in self.ges.keys():
@@ -92,9 +104,11 @@ class GuiElementManager:
     def layout(self, ge) -> list[list]:
         self.add_ge(ge)
         return self.ges[ge.object_id].get_layout()
+
     def row(self, ge) -> list:
         self.add_ge(ge)
         return self.ges[ge.object_id].get_row()
+
     def sge(self, ge) -> sg.Element:
         self.add_ge(ge)
         return self.ges[ge.object_id].get_sge()
@@ -102,18 +116,23 @@ class GuiElementManager:
     def save_all(self, data):
         for ge in self.ges.values():
             ge.save(data)
+
     def load_all(self, data):
         for ge in self.ges.values():
             ge.load(data)
+
     def init_window_all(self, window):
         for ge in self.ges.values():
             ge.init_window(window)
+
     def pull_all(self, values):
         for ge in self.ges.values():
             ge.pull(values)
+
     def push_all(self, window):
         for ge in self.ges.values():
             ge.push(window)
+
     def handle_event(self, context):
         for ge in self.ges.values():
             rv = WRC(ge.handle_event(context))
@@ -126,7 +145,7 @@ class GuiElementManager:
         if unique_string in self.gem_keys:
             return self.gem_keys[unique_string]
         us_clip = unique_string[:30].replace(' ', '').replace('\n', '') # for debug if needed, is unique event without this
-        key = 'GEM_KEY_' + str(self.gem_id) + '_' + str(GuiElementManager.num_gem_keys) + '_' + us_clip
+        key = 'GEM_KEY_{}_{}_{}'.format(self.gem_id, GuiElementManager.num_gem_keys, us_clip)
         GuiElementManager.num_gem_keys += 1
         self.gem_keys[unique_string] = key
         return key
@@ -134,10 +153,12 @@ class GuiElementManager:
 # GuiElement
 
 class GuiElement(ABC, EventManager):
+
     class layout_types:
         SGE = 'sge'
         ROW = 'row'
         LAYOUT = 'layout'
+
     def __init__(self, object_id, layout_type:str) -> None:
         if not layout_type in ['sge', 'row', 'layout']:
             raise ValueError('Bad layout_type')
@@ -168,24 +189,29 @@ class GuiElement(ABC, EventManager):
     # postfix partials/alternatives (e.g. get_sge_basename(...), get_sge_extension(...))
     def _get_sge(self) -> sg.Element:
         raise NotImplemented
+
     @initafter
     def get_sge(self) -> sg.Element: # One sg element
         if self.layout_type in [GuiElement.layout_types.LAYOUT, GuiElement.layout_types.ROW]:
-            raise RuntimeError('GuiElement of type ' + self.layout_type + ' does not support get_sge()')
+            raise RuntimeError(
+                'GuiElement of type ' + self.layout_type + ' does not support get_sge()')
         return self._get_sge()
     
     def _get_row(self) -> list:
         raise NotImplementedError
+
     @initafter
     def get_row(self) -> list: # A list of sg elements
         if self.layout_type == GuiElement.layout_types.LAYOUT:
-            raise RuntimeError('GuiElement of type ' + self.layout_type + ' does not support get_row()')
+            raise RuntimeError(
+                'GuiElement of type ' + self.layout_type + ' does not support get_row()')
         elif self.layout_type == GuiElement.layout_types.SGE:
             return [self.get_sge()]
         return self._get_row()
     
     def _get_layout(self) -> list[list]:
         raise NotImplementedError
+
     @initafter
     def get_layout(self) -> list[list]: # A list of lists of sg elements
         if self.layout_type == GuiElement.layout_types.SGE:
@@ -199,12 +225,14 @@ class GuiElement(ABC, EventManager):
     @abstractmethod
     def _init(self):
         pass
+
     def init(self):
         self._init()
     
     @abstractmethod
     def _save(self, data):
         pass
+
     def save(self, data):
         self.gem.save_all(data)
         if self.disabled:
@@ -217,6 +245,7 @@ class GuiElement(ABC, EventManager):
     @abstractmethod
     def _load(self, data):
         pass
+
     def load(self, data):
         self.gem.load_all(data)
         if self.object_id in data.keys():
@@ -225,6 +254,7 @@ class GuiElement(ABC, EventManager):
     @abstractmethod
     def _pull(self, values):
         pass
+
     def pull(self, values):
         if self.disabled:
             return
@@ -233,12 +263,14 @@ class GuiElement(ABC, EventManager):
     @abstractmethod
     def _push(self, window):
         pass
+
     def push(self, window):
         self._push(window)
     
     @abstractmethod
     def _init_window(self, window):
         pass
+
     def init_window(self, window):
         self.push(window)
         self._init_window(window)
@@ -267,6 +299,7 @@ class GuiElement(ABC, EventManager):
 
     def _is_valid(self):
         pass
+
     def is_valid(self):
         if not self.has_validity:
             return True
@@ -274,6 +307,7 @@ class GuiElement(ABC, EventManager):
     
     def _push_validity(self, window):
         pass
+
     def push_validity(self, window):
         if not self.has_validity:
             return
@@ -303,19 +337,14 @@ class GuiElement(ABC, EventManager):
             self.set_sg_kwargs(key_prefix, **kwargs)
         return self
     
-
-    
     def init_data(self, value):
         """Like calling load(data) while data[object_id] == value"""
         self.load({self.object_id: value})
         return self
-    
-
 
     @classmethod
     def make_key(cls, key_prefix, key_root):
         return str(key_prefix) + str(key_root)
-    
     
     def key_rcm(self, rcm_name, *args):
         menu = self.right_click_menus[rcm_name]
@@ -325,35 +354,36 @@ class GuiElement(ABC, EventManager):
 
     def add_key(self, key_prefix):
         self.keys[key_prefix] = GuiElement.make_key(key_prefix, self.object_id)
+    
     def add_keys(self, key_prefixes):
         for kp in key_prefixes:
             self.add_key(kp)
 
-
-
     def sge(self, ge):
         self.gem.add_ge(ge)
         return self.gem[ge.object_id].get_sge()
+
     def row(self, ge):
         self.gem.add_ge(ge)
         return self.gem[ge.object_id].get_row()
+
     def layout(self, ge):
         self.gem.add_ge(ge)
         return self.gem[ge.object_id].get_layout()
     
     def ges(self, key_prefix):
-        return self.gem[self.keys[key_prefix]]
-
-    
+        return self.gem[self.keys[key_prefix]]    
     
     def disable(self, window, value=True):
         self.disabled = value
         self.push(window)
     
     def check_double_click(self, click_id=None):
-        """Register a click, then return if it is a double click.\n
+        """
+        Register a click, then return if it is a double click.\n
         Don't forget to set the sg kwarg bind_return_key if needed.\n
-        click_id ensure the previous click came from the same place."""
+        click_id ensures the previous click came from the same place.
+        """
         click_time = time.time()
         if (click_time - self.prev_click_time) < nss_g.double_click_secs:
             is_double_click = True
@@ -363,12 +393,16 @@ class GuiElement(ABC, EventManager):
         prev_click_id = self.prev_click_id
         self.prev_click_id = click_id
         if not is_double_click:
-            return None
+            return False
         if click_id != None:
             return (click_id == prev_click_id)
         return True
+    
     register_click = check_double_click
-    """Alias for check_double_click(), makes it more clear that ignoring the is_double_click rv is intentional"""
+    """
+    Alias for check_double_click(), which is more clear that
+    ignoring the is_double_click rv is intentional
+    """
 
     def wrap_event_function(self, func, pull=False, push=False):
         def f(context):
@@ -379,9 +413,9 @@ class GuiElement(ABC, EventManager):
                 self.push(context.window)
         return f
 
-
 # This is for reference, as well as to copy/paste into a new GuiElement subclass
 class GuiElementExample(GuiElement):
+
     def __init__(self, object_id, label, value) -> None:
         super().__init__(object_id, GuiElement.layout_types.ROW)
         self.label = label
@@ -394,12 +428,14 @@ class GuiElementExample(GuiElement):
     def _get_layout(self):
         layout = [[]]
         return layout
+
     def _get_row(self):
         row = []
         if self.label:
             row.append(sg.Text(self.label, key=self.keys['Label'], **self.sg_kwargs['Label']))
         row.append(sg.Input(self.value, key=self.keys['ExampleIn'], **self.sg_kwargs['ExampleIn']))
         return row
+
     def _get_sge(self):
         sge = None
         return sge
@@ -409,17 +445,21 @@ class GuiElementExample(GuiElement):
     def _init(self):
         self.init_sg_kwargs('Label')
         self.init_sg_kwargs('ExampleIn')
+
     def _save(self, data):
         value = self.value
         data[self.object_id] = value
+
     def _load(self, data):
         super().load(data)
         value = data[self.object_id]
         if value == None:
             value = 'DEFAULT'
         self.value = value
+
     def _pull(self, values):
         pass
+
     def _push(self, window):
         sge_example_in = window[self.keys['ExampleIn']]
         sge_example_in.update(disabled=self.disabled)
@@ -427,6 +467,7 @@ class GuiElementExample(GuiElement):
             sge_example_in.update('')
         else:
             sge_example_in.update(self.value)
+
     def _init_window(self, window):
         self.push(window)
     
@@ -445,6 +486,7 @@ class GuiElementExample(GuiElement):
     def sg_kwargs_label(self, **kwargs):
         self.set_sg_kwargs('Label', **kwargs)
         return self
+
     def sg_kwargs_example_in(self, **kwargs):
         self.set_sg_kwargs('ExampleIn', **kwargs)
         return self
@@ -457,8 +499,10 @@ class GuiElementExample(GuiElement):
             return False
         self.value = value
         return True
+
     def reset(self):
         self.set_value('DEFAULT')
+
     def update(self, window, value):
         self.set_value(value)
         self.push(window)

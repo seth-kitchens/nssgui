@@ -1,10 +1,13 @@
 import os
 
 import PySimpleGUI as sg
+
 from nssgui.style import colors
 from nssgui.ge.gui_element import *
 
+
 class Path(GuiElement):
+
     def __init__(self, object_id, text, blank_invalid=False, has_validity=False) -> None:
         super().__init__(object_id, GuiElement.layout_types.ROW)
         self.text = text
@@ -23,7 +26,8 @@ class Path(GuiElement):
         row = [
             sg.Text(self.text),
             sg.In(self.path, key=self.keys['Path'], enable_events=True, **self.sg_kwargs['Path']),
-            sg.FolderBrowse('Browse', key=self.keys['Browse'], target=self.keys['Path'], **self.sg_kwargs['Browse'])
+            sg.FolderBrowse('Browse',
+                key=self.keys['Browse'], target=self.keys['Path'], **self.sg_kwargs['Browse'])
         ]
         return row
     
@@ -32,11 +36,13 @@ class Path(GuiElement):
     def _init(self):
         self.init_sg_kwargs('Path')
         self.init_sg_kwargs('Browse')
+
     def _save(self, data):
         if not self.is_valid():
             data[self.object_id] = None
             return
         data[self.object_id] = self.path
+
     def _pull(self, values):
         path = values[self.keys['Path']]
         if path:
@@ -44,6 +50,7 @@ class Path(GuiElement):
         else:
             path = ''
         self.path = path
+
     def _load(self, data):
         path = data[self.object_id]
         if path:
@@ -51,6 +58,7 @@ class Path(GuiElement):
         else:
             path = ''
         self.path = path
+
     def _push(self, window):
         self.push_validity(window)
         if not self.is_valid():
@@ -58,6 +66,7 @@ class Path(GuiElement):
         else:
             path = self.path
         window[self.keys['Path']](path)
+
     def _init_window(self, window):
         self.push(window)
     
@@ -78,6 +87,7 @@ class Path(GuiElement):
     
     def sg_kwargs_path(self, **kwargs):
         return self.set_sg_kwargs('Path', **kwargs)
+
     def sg_kwargs_browse(self, **kwargs):
         return self.set_sg_kwargs('Browse', **kwargs)
     
@@ -89,6 +99,7 @@ class Path(GuiElement):
             sg_path.update(background_color = colors.valid)
         else:
             sg_path.update(background_color = colors.invalid)
+
     def _is_valid(self):
         path = self.path
         if path == None:
