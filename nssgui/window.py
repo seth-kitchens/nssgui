@@ -187,14 +187,14 @@ class AbstractWindow(ABC, EventManager):
         return self.gem.row(ge)
 
     def update_status(
-            self, text:str=None, until:float|None=None,
+            self, text:str=None, secs:float|None=None,
             replace_text:str='', text_color=COLOR_STATUS,
             replace_text_color=COLOR_STATUS):
         """
         `text`: If not `None`, updates status bar with this immediately
-        `until`: If not `None`, updates status bar with 
-            `replace_text` after `until` seconds
-        `replace_text`: Text to be displayed after `until` seconds
+        `secs`: If not `None`, updates status bar with 
+            `replace_text` after `secs` seconds
+        `replace_text`: Text to be displayed after `secs` seconds
         """
         if self.status_bar_key == None:
             raise RuntimeError('StatusBar has not been specified.')
@@ -202,12 +202,12 @@ class AbstractWindow(ABC, EventManager):
         if text != None:
             status_bar.update_status(self.window, text, text_color=text_color)
         self.window.refresh()
-        if until != None:
+        if secs != None:
             def func(context):
                 status_bar.update_status(
                     context.window, replace_text,
                     text_color=replace_text_color)
-            self.event_after(func, until)
+            self.event_after(func, secs)
 
 class AbstractBlockingWindow(AbstractWindow):
     """

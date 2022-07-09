@@ -127,6 +127,7 @@ class OrderedDict:
                 self.insert(i, key, value)
                 found = True
                 break
+            i += 1
         if not found:
             self.append(key, value)
     

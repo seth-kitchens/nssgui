@@ -1,7 +1,7 @@
 import textwrap
 import time
 from math import ceil
-from typing import Iterable
+from typing import Any, Iterable
 
 import PySimpleGUI as sg
 
@@ -375,7 +375,8 @@ class popups:
             .text(text) \
             .open(context)
     
-    def edit_string(context,
+    def edit_string(
+            context,
             s,
             label=None,
             title='',
@@ -415,3 +416,14 @@ class popups:
         rv = pb.open(context)
         event = pb.final_event
         return event if rv.check_success() else None
+
+    def ok_multiline(context, text:str|Any, size=(120, 20)):
+        """
+        Converts `text` to str then displays it in a large multiline.
+        Good for debugging.
+        """
+        text = str(text)
+        return PopupBuilder() \
+            .ok() \
+            .sge(sg.Multiline, default_text=str(text), size=size) \
+            .open(context)
