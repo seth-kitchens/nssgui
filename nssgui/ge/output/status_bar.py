@@ -4,10 +4,11 @@ from nssgui.ge.gui_element import GuiElement
 
 class StatusBar(GuiElement):
 
-    def __init__(self, object_id, text='', text_color='white', warning_box:bool=True) -> None:
+    def __init__(self, object_id, text='', text_color='white', remove_padding=True) -> None:
         super().__init__(object_id, GuiElement.layout_types.ROW)
         self.text = text
         self.text_color = text_color
+        self.remove_padding = remove_padding
     
     ### GuiElement
 
@@ -15,9 +16,12 @@ class StatusBar(GuiElement):
     
     def _get_row(self): 
         row = []
+        status_kwargs = {}
+        if self.remove_padding:
+            status_kwargs['pad'] = 0
         row.append(sg.Text(self.text,
             key=self.keys['Status'], text_color=self.text_color,
-            relief=sg.RELIEF_SUNKEN, pad=0, expand_x=True))
+            relief=sg.RELIEF_SUNKEN, expand_x=True, **status_kwargs))
         return row
     
     # Data
