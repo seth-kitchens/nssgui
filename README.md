@@ -27,21 +27,14 @@ It should not take much work to get it working on other platforms, which is a pr
 
 ## Installation
 
-Making a venv is suggested.
-
-Windows:
-```
-python -m venv nssgui-venv
-nssgui-venv\scripts\activate.bat
-```
-
-nssgui is not currently in PyPi, but it may be installed via github
+nssgui is not currently in PyPi, but it may be installed from github
 
 ```
 python -m pip install git+https://github.com/seth-kitchens/nssgui
 ```
 
-And here is a one liner to test if it's working
+Here is a one liner to test if it's working
+
 ```
 import nssgui as nss
 nss.popups.ok(nss.WindowContext(), 'NSS is installed and working!')
