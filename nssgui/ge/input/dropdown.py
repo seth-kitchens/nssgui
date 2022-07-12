@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
 class Dropdown(GuiElement):

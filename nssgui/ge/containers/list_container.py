@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import PySimpleGUI as sg
 from nssgui.event_handling import WRC
 from nssgui.window import AbstractBlockingWindow
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 class ListContainer(GuiElement, ABC):
     
@@ -19,23 +19,6 @@ class ListContainer(GuiElement, ABC):
 
     # Layout
     # Data
-
-    def _init(self):
-        pass
-    
-    def _save(self, data):
-        pass
-    
-    def _load(self, data):
-        pass
-    
-    @abstractmethod
-    def _pull(self, values):
-        pass
-    
-    @abstractmethod
-    def _push(self, window):
-        pass
     
     def _init_window(self, window):
         self.push(window)

@@ -6,7 +6,7 @@ from nssgui.text import utils as text_utils
 from nssgui.data import units as unit
 from nssgui.fs.vfs import VFS
 from nssgui.fs.vfs_explorer import VFSExplorer
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 from nssgui.popup import popups
 from nssgui.sg import wrapped as sg_wrapped
 from nssgui.text.utils import TableList
@@ -52,7 +52,7 @@ class VFSExplorerView(GuiElement):
             sg.Sizer(5, 0),
             *self.row(nss_el.Input(self.keys['CurrentPath'], '') \
                 .set_sg_kwargs('In', readonly=True, expand_x=True) \
-                .init_data('""'))
+                .load_value('""'))
         ]
         return row_current_path
     
@@ -126,18 +126,6 @@ class VFSExplorerView(GuiElement):
         return row
 
     # Data
-    
-    def _init(self):
-        pass
-    
-    def _save(self, data):
-        pass
-    
-    def _load(self, data):
-        pass
-    
-    def _pull(self, values):
-        pass
     
     def _push(self, window):
         self.update_rcm(window)

@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
 __all__ = ['CycleButton']
@@ -64,15 +64,9 @@ class CycleButton(GuiElement):
     def _init(self):
         self.init_sg_kwargs('Button')
     
-    def _save(self, data):
-        pass
-    
     def _load(self, data):
         value = data[self.object_id]
         self.set_current_value(value)
-    
-    def _pull(self, values):
-        pass
     
     def _push(self, window):
         sge_button = window[self.keys['Button']]
@@ -81,9 +75,6 @@ class CycleButton(GuiElement):
         if pre_text:
             sge_label = window[self.keys['Label']]
             sge_label.update(pre_text)
-    
-    def _init_window(self, window):
-        pass
     
     # Keys and Events
     

@@ -16,6 +16,7 @@ __all__ = [
     'check_if_subclasses',
     'GuiElement',
     'GuiElementManager',
+    'GuiElementLayoutManager',
     'iLength',
     'iStringable',
     'iEdittable',
@@ -74,7 +75,39 @@ def initafter(f):
 
 # GuiElement Manager
 
-class GuiElementManager:
+class GuiElementLayoutManager(ABC):
+
+    @abstractmethod
+    def add_ge(self, ge:GuiElement):
+        pass
+
+    @abstractmethod
+    def get_ge(self, object_id:str) -> GuiElement | None:
+        pass
+
+    def sge(self, ge:GuiElement) -> sg.Element:
+        g = self.get_ge(ge.object_id)
+        if g is not None:
+            return g.get_sge()
+        self.add_ge(ge)
+        return self.get_ge(ge.object_id).get_sge()
+
+    def row(self, ge:GuiElement) -> list:
+        g = self.get_ge(ge.object_id)
+        if g is not None:
+            return g.get_row()
+        self.add_ge(ge)
+        return self.get_ge(ge.object_id).get_row()
+
+    def layout(self, ge:GuiElement) -> list[list]:
+        g = self.get_ge(ge.object_id)
+        if g is not None:
+            return g.get_layout()
+        self.add_ge(ge)
+        return self.get_ge(ge.object_id).get_layout()
+
+
+class GuiElementManager(GuiElementLayoutManager):
 
     num_gems = 0
     num_gem_keys = 0
@@ -93,43 +126,34 @@ class GuiElementManager:
     def __setitem__(self, key, value):
         self.ges[key] = value
 
-    def add_ge(self, ge, do_overwrite=False):
+    def add_ge(self, ge):
         id = ge.object_id
-        if do_overwrite or not id in self.ges.keys():
+        if not id in self.ges.keys():
             ge.init()
             self.ges[id] = ge
     
-    # add an object if it doesn't already exist and return its layout elements
-
-    def layout(self, ge) -> list[list]:
-        self.add_ge(ge)
-        return self.ges[ge.object_id].get_layout()
-
-    def row(self, ge) -> list:
-        self.add_ge(ge)
-        return self.ges[ge.object_id].get_row()
-
-    def sge(self, ge) -> sg.Element:
-        self.add_ge(ge)
-        return self.ges[ge.object_id].get_sge()
+    def get_ge(self, object_id) -> GuiElement | None:
+        if object_id not in self.ges.keys():
+            return None
+        return self.ges[object_id]
     
-    def save_all(self, data):
+    def save_ges(self, data):
         for ge in self.ges.values():
             ge.save(data)
 
-    def load_all(self, data):
+    def load_ges(self, data):
         for ge in self.ges.values():
             ge.load(data)
 
-    def init_window_all(self, window):
+    def init_window_ges(self, window):
         for ge in self.ges.values():
             ge.init_window(window)
 
-    def pull_all(self, values):
+    def pull_ges(self, values):
         for ge in self.ges.values():
             ge.pull(values)
 
-    def push_all(self, window):
+    def push_ges(self, window):
         for ge in self.ges.values():
             ge.push(window)
 
@@ -152,7 +176,7 @@ class GuiElementManager:
 
 # GuiElement
 
-class GuiElement(ABC, EventManager):
+class GuiElement(EventManager, GuiElementLayoutManager):
 
     class layout_types:
         SGE = 'sge'
@@ -160,6 +184,9 @@ class GuiElement(ABC, EventManager):
         LAYOUT = 'layout'
 
     def __init__(self, object_id, layout_type:str) -> None:
+        """
+        
+        """
         if not layout_type in ['sge', 'row', 'layout']:
             raise ValueError('Bad layout_type')
         super().__init__(debug_id='GE:' + object_id)
@@ -181,114 +208,136 @@ class GuiElement(ABC, EventManager):
         self.define_menus()
         
     
-    ## Abstracts
+    ## Abstract / Virtual
 
     # Layout
 
     # These are virtual, but one must be implemented
     # postfix partials/alternatives (e.g. get_sge_basename(...), get_sge_extension(...))
     def _get_sge(self) -> sg.Element:
-        raise NotImplemented
-
-    @initafter
-    def get_sge(self) -> sg.Element: # One sg element
-        if self.layout_type in [GuiElement.layout_types.LAYOUT, GuiElement.layout_types.ROW]:
-            raise RuntimeError(
-                'GuiElement of type ' + self.layout_type + ' does not support get_sge()')
-        return self._get_sge()
+        raise NotImplementedError
     
     def _get_row(self) -> list:
         raise NotImplementedError
-
-    @initafter
-    def get_row(self) -> list: # A list of sg elements
-        if self.layout_type == GuiElement.layout_types.LAYOUT:
-            raise RuntimeError(
-                'GuiElement of type ' + self.layout_type + ' does not support get_row()')
-        elif self.layout_type == GuiElement.layout_types.SGE:
-            return [self.get_sge()]
-        return self._get_row()
     
     def _get_layout(self) -> list[list]:
         raise NotImplementedError
 
-    @initafter
-    def get_layout(self) -> list[list]: # A list of lists of sg elements
-        if self.layout_type == GuiElement.layout_types.SGE:
-            return [[self.get_sge()]]
-        elif self.layout_type == GuiElement.layout_types.ROW:
-            return [self.get_row()]
-        return self._get_layout()
-
     # Data
     
-    @abstractmethod
     def _init(self):
         pass
-
-    def init(self):
-        self._init()
     
-    @abstractmethod
     def _save(self, data):
         pass
+    
+    def _load(self, data):
+        pass
+    
+    def _pull(self, values):
+        pass
+    
+    def _push(self, window):
+        pass
+    
+    def _init_window(self, window):
+        pass
+
+    # Keys, Events, Menus
+
+    def define_keys(self):
+        pass
+
+    def define_events(self):
+        pass
+
+    def define_menus(self):
+        pass
+
+    ##
+
+    def init(self):
+        """
+        Do not override this! Most likely, the inner function `_init()`
+        is what you want to override.
+        """
+        self._init()
+        return self
 
     def save(self, data):
-        self.gem.save_all(data)
+        """
+        Do not override this! Most likely, the inner function `_save()`
+        is what you want to override.
+        """
+        self.gem.save_ges(data)
         if self.disabled:
             data[self.object_id] = None
         elif not self.is_valid():
             data[self.object_id] = None
         else:
             self._save(data)
-    
-    @abstractmethod
-    def _load(self, data):
-        pass
+        return self
 
     def load(self, data):
-        self.gem.load_all(data)
+        """
+        Do not override this! Most likely, the inner function `_load()`
+        is what you want to override.
+        """
+        self.gem.load_ges(data)
         if self.object_id in data.keys():
             self._load(data)
-    
-    @abstractmethod
-    def _pull(self, values):
-        pass
+        return self
 
     def pull(self, values):
+        """
+        Do not override this! Most likely, the inner function `_pull()`
+        is what you want to override.
+        """
         if self.disabled:
             return
         self._pull(values)
-    
-    @abstractmethod
-    def _push(self, window):
-        pass
+        return self
 
     def push(self, window):
+        """
+        Do not override this! Most likely, the inner function `_push()`
+        is what you want to override.
+        """
         self._push(window)
-    
-    @abstractmethod
-    def _init_window(self, window):
-        pass
 
     def init_window(self, window):
+        """
+        Do not override this! Most likely, the inner function `_init_window())`
+        is what you want to override.
+        """
         self.push(window)
         self._init_window(window)
 
-    # Keys and Events
+    @initafter
+    def get_sge(self) -> sg.Element: # One sg element
+        """
+        Do not override this! Most likely, the inner function `_get_sge()`
+        is what you want to override.
+        """
+        return self._get_sge()
 
-    @abstractmethod
-    def define_keys(self):
-        pass
+    @initafter
+    def get_row(self) -> list: # A list of sg elements
+        """
+        Do not override this! Most likely, the inner function `_get_row()`
+        is what you want to override.
+        """
+        return self._get_row()
 
-    def define_menus(self):
-        pass
-
-    @abstractmethod
-    def define_events(self):
-        pass
-
-    ## Virtuals
+    @initafter
+    def get_layout(self) -> list[list]: # A list of lists of sg elements
+        """
+        Do not override this! Most likely, the inner function `_get_layout()`
+        is what you want to override.
+        """
+        return self._get_layout()
+    
+    ##
 
     def handle_event(self, context):
         rv = WRC(EventManager.handle_event(self, context))
@@ -296,24 +345,24 @@ class GuiElement(ABC, EventManager):
             return rv
         rv |= WRC(self.gem.handle_event(context))
         return rv
-
-    def _is_valid(self):
-        pass
+    
+    # Validity
 
     def is_valid(self):
-        if not self.has_validity:
-            return True
-        return self._is_valid()
-    
-    def _push_validity(self, window):
-        pass
+        """
+        For Overriding: function should probably start with a has_validity check:
+        `if not self.has_validity: return True`
+        """
+        return True
 
     def push_validity(self, window):
-        if not self.has_validity:
-            return
-        self._push_validity(window)
+        """
+        For Overriding: function should probably start with a has_validity check:
+        `if not self.has_validity: return`
+        """
+        pass
     
-    ## Other
+    ## sg kwargs
 
     def set_sg_kwargs(self, key_prefix, overwrite_kwargs=True, **kwargs):
         if not key_prefix in self.sg_kwargs:
@@ -337,16 +386,18 @@ class GuiElement(ABC, EventManager):
             self.set_sg_kwargs(key_prefix, **kwargs)
         return self
     
-    def init_data(self, value):
-        """Like calling load(data) while data[object_id] == value"""
-        self.load({self.object_id: value})
-        return self
+    ## Other
+    
+    def load_value(self, value):
+        """Load a value as if it was stored data for this ge"""
+        return self.load({self.object_id: value})
 
     @classmethod
     def make_key(cls, key_prefix, key_root):
         return str(key_prefix) + str(key_root)
     
     def key_rcm(self, rcm_name, *args):
+        """Get key for a right click menu item"""
         menu = self.right_click_menus[rcm_name]
         for arg in args:
             menu = menu[arg]
@@ -354,22 +405,12 @@ class GuiElement(ABC, EventManager):
 
     def add_key(self, key_prefix):
         self.keys[key_prefix] = GuiElement.make_key(key_prefix, self.object_id)
+
+    def add_ge(self, ge):
+        self.gem.add_ge(ge)
     
-    def add_keys(self, key_prefixes):
-        for kp in key_prefixes:
-            self.add_key(kp)
-
-    def sge(self, ge):
-        self.gem.add_ge(ge)
-        return self.gem[ge.object_id].get_sge()
-
-    def row(self, ge):
-        self.gem.add_ge(ge)
-        return self.gem[ge.object_id].get_row()
-
-    def layout(self, ge):
-        self.gem.add_ge(ge)
-        return self.gem[ge.object_id].get_layout()
+    def get_ge(self, object_id) -> GuiElement | None:
+        return self.gem.get_ge(object_id)
     
     def ges(self, key_prefix):
         return self.gem[self.keys[key_prefix]]    
@@ -400,109 +441,6 @@ class GuiElement(ABC, EventManager):
     
     register_click = check_double_click
     """
-    Alias for check_double_click(), which is more clear that
+    Alias for check_double_click() for more clearly showing that
     ignoring the is_double_click rv is intentional
     """
-
-    def wrap_event_function(self, func, pull=False, push=False):
-        def f(context):
-            if pull:
-                self.pull(context.values)
-            func(context)
-            if push:
-                self.push(context.window)
-        return f
-
-# This is for reference, as well as to copy/paste into a new GuiElement subclass
-class GuiElementExample(GuiElement):
-
-    def __init__(self, object_id, label, value) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
-        self.label = label
-        self.value = value
-
-    ### GuiElement
-
-    # Layout
-
-    def _get_layout(self):
-        layout = [[]]
-        return layout
-
-    def _get_row(self):
-        row = []
-        if self.label:
-            row.append(sg.Text(self.label, key=self.keys['Label'], **self.sg_kwargs['Label']))
-        row.append(sg.Input(self.value, key=self.keys['ExampleIn'], **self.sg_kwargs['ExampleIn']))
-        return row
-
-    def _get_sge(self):
-        sge = None
-        return sge
-    
-    # Data
-
-    def _init(self):
-        self.init_sg_kwargs('Label')
-        self.init_sg_kwargs('ExampleIn')
-
-    def _save(self, data):
-        value = self.value
-        data[self.object_id] = value
-
-    def _load(self, data):
-        super().load(data)
-        value = data[self.object_id]
-        if value == None:
-            value = 'DEFAULT'
-        self.value = value
-
-    def _pull(self, values):
-        pass
-
-    def _push(self, window):
-        sge_example_in = window[self.keys['ExampleIn']]
-        sge_example_in.update(disabled=self.disabled)
-        if self.disabled:
-            sge_example_in.update('')
-        else:
-            sge_example_in.update(self.value)
-
-    def _init_window(self, window):
-        self.push(window)
-    
-    # Keys and Events
-    
-    def define_keys(self):
-        super().define_keys()
-        self.add_key('Label')
-        self.add_key('ExampleIn')
-    
-    def define_events(self):
-        super().define_events()
-
-    # Others
-
-    def sg_kwargs_label(self, **kwargs):
-        self.set_sg_kwargs('Label', **kwargs)
-        return self
-
-    def sg_kwargs_example_in(self, **kwargs):
-        self.set_sg_kwargs('ExampleIn', **kwargs)
-        return self
-
-    ### GuiElementExample
-
-    def set_value(self, value):
-        if value == None:
-            self.reset()
-            return False
-        self.value = value
-        return True
-
-    def reset(self):
-        self.set_value('DEFAULT')
-
-    def update(self, window, value):
-        self.set_value(value)
-        self.push(window)

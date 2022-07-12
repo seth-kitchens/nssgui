@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 
 from nssgui.data import units as unit
 from nssgui.style import colors
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 from nssgui import g as nss_g
 from nssgui import ge as nss_el
 
@@ -127,14 +127,18 @@ class InputUnits(GuiElement):
     
     ### iValid
     
-    def _push_validity(self, window):
+    def push_validity(self, window):
+        if not self.has_validity:
+            return
         sg_in = window[self.keys['In']]
         if self.is_valid():
             sg_in.update(background_color = colors.valid)
         else:
             sg_in.update(background_color = colors.invalid)
 
-    def _is_valid(self):
+    def is_valid(self):
+        if not self.has_validity:
+            return True
         value = self.unit_value.get_value()
         if value == None:
             return False

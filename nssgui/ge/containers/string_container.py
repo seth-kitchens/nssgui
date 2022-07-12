@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
 from nssgui.style import colors
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 from nssgui.ge.containers.list_container import ListContainer
 
 
@@ -89,14 +89,18 @@ class StringContainer(ListContainer):
     
     ### iValid
     
-    def _push_validity(self, window):
+    def push_validity(self, window):
+        if not self.has_validity:
+            return
         sg_in = window[self.keys['In']]
         if self.is_valid():
             sg_in.update(background_color = colors.valid)
         else:
             sg_in.update(background_color = colors.invalid)
     
-    def _is_valid(self):
+    def is_valid(self):
+        if not self.has_validity:
+            return True
         if self.blank_invalid and not len(self.ge):
             return False
         return True

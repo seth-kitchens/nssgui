@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import GuiElement
+from nssgui.gui_element import GuiElement
 
 class OutText(GuiElement):
 
@@ -31,9 +31,6 @@ class OutText(GuiElement):
     def _load(self, data):
         self.value = data[self.object_id]
 
-    def _pull(self, values):
-        pass
-
     def _push(self, window):
         window[self.keys['Out']](self.value)
 
@@ -44,7 +41,7 @@ class OutText(GuiElement):
 
     def define_keys(self):
         super().define_keys()
-        self.add_keys(['Out'])
+        self.add_key('Out')
     
     def define_events(self):
         super().define_events()

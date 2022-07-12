@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
 class Header(GuiElement):
@@ -20,21 +20,6 @@ class Header(GuiElement):
 
     def _init(self):
         self.init_sg_kwargs('Text', text_color='gold')
-
-    def _save(self, data):
-        pass
-
-    def _load(self, data):
-        pass
-
-    def _pull(self, values):
-        pass
-
-    def _push(self, window):
-        pass
-
-    def _init_window(self, window):
-        pass
 
     # Keys and Events
     

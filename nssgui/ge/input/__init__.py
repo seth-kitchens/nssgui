@@ -1,3 +1,5 @@
+# input: takes variable data from the user
+
 from .cycle_button import CycleButton
 from .checkbox import Checkbox
 from .dropdown import Dropdown

@@ -4,8 +4,7 @@ import PySimpleGUI as sg
 
 from nssgui.style import colors
 from nssgui.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
-from nssgui.ge.gui_element import *
-from nssgui.ge.output import StatusBar
+from nssgui.gui_element import *
 from nssgui import sg as nss_sg
 
 
@@ -82,7 +81,7 @@ class WindowContext:
         self.window.un_hide()
 
 
-class AbstractWindow(ABC, EventManager):
+class AbstractWindow(EventManager, GuiElementLayoutManager):
 
     COLOR_STATUS = '#FFFFFF'
     COLOR_STATUS_FADED = '#CCCCCC'
@@ -131,19 +130,19 @@ class AbstractWindow(ABC, EventManager):
     # Data
 
     def save(self, data):
-        self.gem.save_all(data)
+        self.gem.save_ges(data)
 
     def load(self, data):
-        self.gem.load_all(data)
+        self.gem.load_ges(data)
 
     def pull(self, values):
-        self.gem.pull_all(values)
+        self.gem.pull_ges(values)
 
     def push(self, window):
-        self.gem.push_all(window)
+        self.gem.push_ges(window)
 
     def init_window(self, window):
-        self.gem.init_window_all(window)
+        self.gem.init_window_ges(window)
 
     # Other
 
@@ -180,7 +179,7 @@ class AbstractWindow(ABC, EventManager):
         if k in context.asyncs:
             context.asyncs[k].close(context)
     
-    def status_bar(self, ge:StatusBar):
+    def status_bar(self, ge):
         """Links a ge element to the update_status() function.
         Placing a [sg.Sizer(0, 10)] row above a status bar is suggested."""
         self.status_bar_key = ge.object_id
@@ -208,6 +207,12 @@ class AbstractWindow(ABC, EventManager):
                     context.window, replace_text,
                     text_color=replace_text_color)
             self.event_after(func, secs)
+    
+    def add_ge(self, ge):
+        self.gem.add_ge(ge)
+    
+    def get_ge(self, object_id) -> GuiElement | None:
+        return self.gem.get_ge(object_id)
 
 class AbstractBlockingWindow(AbstractWindow):
     """

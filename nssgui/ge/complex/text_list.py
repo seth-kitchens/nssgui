@@ -3,7 +3,7 @@ from typing import Any, Iterable
 
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 from nssgui.popup import popups
 from nssgui.sg import wrapped as sg_wrapped
 

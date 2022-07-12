@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
 from nssgui.style import colors
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
 class Input(GuiElement):
@@ -80,7 +80,7 @@ class Input(GuiElement):
     
     def define_keys(self):
         super().define_keys()
-        self.add_keys(['In'])
+        self.add_key('In')
     
     def define_events(self):
         super().define_events()
@@ -96,14 +96,18 @@ class Input(GuiElement):
     
     ### iValid
     
-    def _push_validity(self, window):
+    def push_validity(self, window):
+        if not self.has_validity:
+            return
         sg_in = window[self.keys['In']]
         if self.is_valid():
             sg_in.update(background_color = colors.valid)
         else:
             sg_in.update(background_color = colors.invalid)
 
-    def _is_valid(self):
+    def is_valid(self):
+        if not self.has_validity:
+            return True
         if self.value == None:
             return False
         self.refresh_value()

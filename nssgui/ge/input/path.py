@@ -3,7 +3,7 @@ import os
 import PySimpleGUI as sg
 
 from nssgui.style import colors
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
 class Path(GuiElement):
@@ -93,14 +93,18 @@ class Path(GuiElement):
     
     ### iValid
     
-    def _push_validity(self, window):
+    def push_validity(self, window):
+        if not self.has_validity:
+            return
         sg_path = window[self.keys['Path']]
         if self.is_valid():
             sg_path.update(background_color = colors.valid)
         else:
             sg_path.update(background_color = colors.invalid)
 
-    def _is_valid(self):
+    def is_valid(self):
+        if not self.has_validity:
+            return True
         path = self.path
         if path == None:
             return False

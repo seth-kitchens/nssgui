@@ -5,7 +5,7 @@ import re
 import PySimpleGUI as sg
 
 from nssgui.event_handling import WRC
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 from nssgui.popup import popups
 from nssgui.data.ordered_dict import OrderedDict
 from nssgui import sg as nss_sg
@@ -111,17 +111,11 @@ class DetailList(GuiElement, iLength, ABC):
     
     # Data
     
-    def _init(self):
-        pass
-    
     def _save(self, data):
         d = {}
         for k, v in self.item_dict.to_pairs():
             d[k] = self.pack_data(v)
         data[self.object_id] = d
-    
-    def _pull(self, values):
-        pass
     
     def _load(self, data):
         self.item_dict.clear()
