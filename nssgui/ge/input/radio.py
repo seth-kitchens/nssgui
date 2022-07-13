@@ -6,7 +6,7 @@ from nssgui.gui_element import *
 __all__ = ['Radio']
 
 
-class Radio(GuiElement):
+class Radio(GuiElement.iRow, GuiElement):
 
     def __init__(self, object_id, text, options:list[str]|dict[str,str]):
         """
@@ -15,7 +15,7 @@ class Radio(GuiElement):
         """
         self.num_options = len(options)
         self.button_keys = [] # index -> key
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.groupid = GuiElement.make_key('RadioGroup', object_id)
         self.text = text if text != None else ''
         self.k_to_v = {}  # key   -> value
@@ -36,7 +36,7 @@ class Radio(GuiElement):
             self.v_to_k[value] = key
             i += 1
     
-    def get_button_key_prefix(self, index):
+    def get_button_key_name(self, index):
         return 'RadioButton' + str(index)
 
     def get_button_key(self, index):
@@ -62,7 +62,7 @@ class Radio(GuiElement):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Radio')
 
     def _save(self, data):
@@ -82,7 +82,7 @@ class Radio(GuiElement):
             window[key](False)
         window[self.selected_key](True)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
@@ -91,7 +91,7 @@ class Radio(GuiElement):
         super().define_keys()
         self.add_key('Radio')
         for i in range(self.num_options):
-            self.add_key(self.get_button_key_prefix(i))
+            self.add_key(self.get_button_key_name(i))
             self.button_keys.append(self.get_button_key(i))
     
     def define_events(self):

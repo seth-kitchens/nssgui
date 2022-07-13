@@ -3,10 +3,10 @@ import PySimpleGUI as sg
 from nssgui.gui_element import *
 
 
-class Header(GuiElement):
+class Header(GuiElement.iSge, GuiElement):
 
     def __init__(self, object_id, text) -> None:
-        super().__init__(object_id, GuiElement.layout_types.SGE)
+        super().__init__(object_id)
         self.text = text
 
     ### GuiElement
@@ -18,7 +18,7 @@ class Header(GuiElement):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Text', text_color='gold')
 
     # Keys and Events

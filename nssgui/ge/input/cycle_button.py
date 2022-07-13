@@ -6,7 +6,7 @@ from nssgui.gui_element import *
 __all__ = ['CycleButton']
 
 
-class CycleButton(GuiElement):
+class CycleButton(GuiElement.iRow, GuiElement):
 
     class display_modes:
         BEFORE_BUTTON_TEXT = 'before_button_text'
@@ -21,7 +21,7 @@ class CycleButton(GuiElement):
             indicator=False,
             button_text=None,
             option_display_mode='after_button_text') -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.label = label if label != None else ''
         self.button_text = button_text if button_text != None else ''
         self.option_display_mode = option_display_mode
@@ -61,7 +61,7 @@ class CycleButton(GuiElement):
 
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Button')
     
     def _load(self, data):

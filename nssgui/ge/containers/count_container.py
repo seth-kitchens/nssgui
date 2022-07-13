@@ -8,7 +8,7 @@ from nssgui.ge.containers.list_container import ListContainer
 class CountContainer(ListContainer):
     
     def __init__(self, text, ge:GuiElement) -> None:
-        check_if_instances(ge, [GuiElement, iLength])
+        check_if_instances(ge, [GuiElement, GuiElement.iLength])
         super().__init__(ge, GuiElement.layout_types.ROW)
         self.text = text
     

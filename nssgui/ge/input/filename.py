@@ -3,10 +3,10 @@ import PySimpleGUI as sg
 from nssgui.gui_element import *
 
 
-class Filename(GuiElement):
+class Filename(GuiElement.iRow, GuiElement):
 
     def __init__(self, object_id, text) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.name = ''
         self.extension = ''
@@ -25,7 +25,7 @@ class Filename(GuiElement):
 
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Name')
         self.init_sg_kwargs('Extension', size=(6, 1))
 
@@ -44,7 +44,7 @@ class Filename(GuiElement):
         window[self.keys['Name']](self.name)
         window[self.keys['Extension']](self.extension)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events

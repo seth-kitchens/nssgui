@@ -3,10 +3,10 @@ import PySimpleGUI as sg
 from nssgui.gui_element import *
 
 
-class Checkbox(GuiElement):
+class Checkbox(GuiElement.iSge, GuiElement):
     
     def __init__(self, object_id, text) -> None:
-        super().__init__(object_id, GuiElement.layout_types.SGE)
+        super().__init__(object_id)
         self.text = text
         self.value = False
     
@@ -20,7 +20,7 @@ class Checkbox(GuiElement):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Checkbox')
     
     def _save(self, data):
@@ -40,7 +40,7 @@ class Checkbox(GuiElement):
         sge_checkbox.update(self.value)
         sge_checkbox.update(disabled=self.disabled)
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events

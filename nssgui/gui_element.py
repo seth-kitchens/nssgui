@@ -16,11 +16,7 @@ __all__ = [
     'check_if_subclasses',
     'GuiElement',
     'GuiElementManager',
-    'GuiElementLayoutManager',
-    'iLength',
-    'iStringable',
-    'iEdittable',
-    'initafter'
+    'GuiElementLayoutManager'
 ]
 
 
@@ -33,44 +29,6 @@ def check_if_subclasses(name, types:list):
     for t in types:
         if not issubclass(name, t):
             raise TypeError('Obj ' + str(name) + ' is not a subclass of ' + str(t))
-
-class iLength(ABC):
-    @abstractmethod
-    def __len__(self):
-        pass
-
-class iStringable(ABC):
-    @abstractmethod
-    def to_string(self):
-        pass
-
-    @abstractmethod
-    def load_string(self, s):
-        pass
-
-class iEdittable(ABC):
-    """Can be editted with an 'Edit' button"""
-    @abstractmethod
-    def get_edit_layout(self):
-        pass
-
-    @abstractmethod
-    def handle_event(self, context):
-        pass
-
-def initafter(f):
-    @wraps(f)
-    def func(*args, **kwargs):
-        rv = f(*args, **kwargs)
-        if 'self' in kwargs:
-            obj = kwargs['self']
-        else:
-            obj = args[0]
-        if not obj.events_defined:
-            obj.define_events()
-            obj.events_defined = True
-        return rv
-    return func
 
 
 # GuiElement Manager
@@ -129,7 +87,6 @@ class GuiElementManager(GuiElementLayoutManager):
     def add_ge(self, ge):
         id = ge.object_id
         if not id in self.ges.keys():
-            ge.init()
             self.ges[id] = ge
     
     def get_ge(self, object_id) -> GuiElement | None:
@@ -137,23 +94,23 @@ class GuiElementManager(GuiElementLayoutManager):
             return None
         return self.ges[object_id]
     
-    def save_ges(self, data):
+    def ges_save(self, data):
         for ge in self.ges.values():
             ge.save(data)
 
-    def load_ges(self, data):
+    def ges_load(self, data):
         for ge in self.ges.values():
             ge.load(data)
 
-    def init_window_ges(self, window):
+    def ges_init_window_finalized(self, window):
         for ge in self.ges.values():
-            ge.init_window(window)
+            ge.init_window_finalized(window)
 
-    def pull_ges(self, values):
+    def ges_pull(self, values):
         for ge in self.ges.values():
             ge.pull(values)
 
-    def push_ges(self, window):
+    def ges_push(self, window):
         for ge in self.ges.values():
             ge.push(window)
 
@@ -178,19 +135,124 @@ class GuiElementManager(GuiElementLayoutManager):
 
 class GuiElement(EventManager, GuiElementLayoutManager):
 
+    class iLength(ABC):
+        """GuiElement data can be measured with len()"""
+
+        @abstractmethod
+        def __len__(self):
+            pass
+
+    class iStringable(ABC):
+        """GuiElement data can be represented by a string"""
+
+        @abstractmethod
+        def to_string(self):
+            """data -> string"""
+            pass
+
+        @abstractmethod
+        def load_string(self, s):
+            """string -> data of existing class"""
+            pass
+
+    class iEdittable(ABC):
+        """GuiElement data can be editted with an 'Edit' button"""
+
+        @abstractmethod
+        def get_edit_layout(self):
+            """Return a layout that allows for editing, to be nested in a window"""
+            pass
+    
+    class iLayout(ABC):
+        """GuiElement's primary layout is "layout" of the form: list[list[sge]]"""
+
+        def get_layout_type(self):
+            return GuiElement.layout_types.LAYOUT
+        
+        @abstractmethod
+        def _get_layout(self):
+            pass
+    
+    class iRow(ABC):
+        """GuiElement's primary layout is "row" of the form: list[sge]"""
+
+        def get_layout_type(self):
+            return GuiElement.layout_types.ROW
+        
+        @abstractmethod
+        def _get_row(self):
+            pass
+    
+        def _get_layout(self):
+            return [self._get_row()]
+    
+    class iSge(ABC):
+        """GuiElement's primary layout is "sge" of the form: sge"""
+
+        def get_layout_type(self):
+            return GuiElement.layout_types.ROW
+        
+        @abstractmethod
+        def _get_sge(self):
+            pass
+
+        def _get_row(self):
+            return [self._get_sge()]
+        
+        def _get_layout(self):
+            return [[self._get_sge()]]
+
     class layout_types:
         SGE = 'sge'
         ROW = 'row'
         LAYOUT = 'layout'
 
-    def __init__(self, object_id, layout_type:str) -> None:
+    def __init__(self, object_id) -> None:
         """
+        ## GuiElement
+
+        ### Subclassing
+
+        - Subclass iSge, iRow or iLayout before GuiElement.
+        Example: `class mygesubclass(GuiElement.iRow, GuiElement)`
+        - Define layout in the respective method:
+            - `_get_sge()` OR
+            - `_get_row()` OR
+            - `_get_layout()`
+        - Override definition methods needed
+            - `define_keys()`
+            - `define_events()`
+            - `define_menus()`
         
+        ### Initialization
+
+        GuiElements are made to be defined within a layout definition, where instantiation is
+        followed by a get (sge|row|layout) function, which may be called again later. Some of
+        initialization is delayed until a layout function is first called.
+
+        - External: GuiElement()
+        
+        - __init__()
+            - define_keys()
+            - internal GuiElementManager constructed
+            - define_menus()
+        - init():  OPTIONAL, needed for function calls between instantiation and getting the layout
+            - init_before_layout():  (returns if already called)
+                - init_before_layout
+        - functions called in calling function, e.g. `load_value`
+        - `get_sge()` OR `get_row()` OR `get_layout()` is called
+            - init_before_layout(): (returns if already called)
+                - _init_before_layout()
+            - `_get_sge()` OR `_get_row()` OR `_get_layout()`
+            - init_after_layout()
+                - define_events()
+
         """
-        if not layout_type in ['sge', 'row', 'layout']:
-            raise ValueError('Bad layout_type')
         super().__init__(debug_id='GE:' + object_id)
-        self.layout_type = layout_type
+        if not (issubclass(self.__class__, GuiElement.iSge)
+            or  issubclass(self.__class__, GuiElement.iRow)
+            or  issubclass(self.__class__, GuiElement.iLayout)):
+            raise TypeError('A GuiElement class must inherit one of: iSge, iRow, iLayout')
         self.object_id = object_id
         self.keys = {}
         self.define_keys()
@@ -203,7 +265,9 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         self.has_validity = False
         self.prev_click_time = 0
         self.prev_click_id = None
-        self.events_defined = False
+        self.init_before_layout_finished = False
+        self.init_after_layout_finished = False
+        self.init_window_finalized_finished = False
         self.right_click_menus = MenuDict()
         self.define_menus()
         
@@ -211,22 +275,52 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     ## Abstract / Virtual
 
     # Layout
+    
+    @abstractmethod
+    def get_layout_type(self):
+        """
+        Do not override this! This should be overridden by one of:
+        `GuiElement.iSge` `GuiElement.iRow` `GuiElement.iLayout`
 
-    # These are virtual, but one must be implemented
-    # postfix partials/alternatives (e.g. get_sge_basename(...), get_sge_extension(...))
-    def _get_sge(self) -> sg.Element:
-        raise NotImplementedError
+        Then, that interface's respective `_get` method must be defined.
+        """
+        pass
+
+    # Keys, Events, Menus
+
+    def define_keys(self):
+        """
+        This is where all keys are defined. These seperate sg elements
+        from one another, and allow for the use of key names local to each GuiElement.
+        Define each key with `add_key()` and then access them elsewhere with the `keys` dict. 
+        """
+        pass
+
+    def define_events(self):
+        """
+        Define events here. This function is called AFTER the layout function is called
+        (see `initafter()`).
+        """
+        pass
+
+    def define_menus(self):
+        """
+        Define menus here. This includes menu bars and right click menus
+        """
+        pass
+
+    # Init
     
-    def _get_row(self) -> list:
-        raise NotImplementedError
+    def _init_before_layout(self):
+        pass
+
+    def _init_after_layout(self):
+        pass
     
-    def _get_layout(self) -> list[list]:
-        raise NotImplementedError
+    def _init_window_finalized(self, window):
+        pass
 
     # Data
-    
-    def _init(self):
-        pass
     
     def _save(self, data):
         pass
@@ -239,37 +333,56 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     
     def _push(self, window):
         pass
-    
-    def _init_window(self, window):
-        pass
-
-    # Keys, Events, Menus
-
-    def define_keys(self):
-        pass
-
-    def define_events(self):
-        pass
-
-    def define_menus(self):
-        pass
 
     ##
 
-    def init(self):
+    # Init
+
+    def init_before_layout(self):
         """
-        Do not override this! Most likely, the inner function `_init()`
+        Do not override this! Most likely, the inner function `_init_before_layout()`
         is what you want to override.
         """
-        self._init()
+        if self.init_before_layout_finished:
+            return self
+        self._init_before_layout()
+        self.init_before_layout_finished = True
         return self
+    
+    init = init_before_layout
+
+    def init_after_layout(self):
+        """
+        Do not override this! Most likely, the inner function `_init_after_layout()`
+        is what you want to override.
+        """
+        if self.init_after_layout_finished:
+            return self
+        self.define_events()
+        self._init_after_layout()
+        self.init_after_layout_finished = True
+        return self
+
+    def init_window_finalized(self, window):
+        """
+        Do not override this! Most likely, the inner function `_init_window_finalized())`
+        is what you want to override.
+        """
+        if self.init_window_finalized_finished:
+            return self
+        self.push(window)
+        self._init_window_finalized(window)
+        self.init_window_finalized_finished = True
+        return self
+
+    # Data
 
     def save(self, data):
         """
         Do not override this! Most likely, the inner function `_save()`
         is what you want to override.
         """
-        self.gem.save_ges(data)
+        self.gem.ges_save(data)
         if self.disabled:
             data[self.object_id] = None
         elif not self.is_valid():
@@ -283,7 +396,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         Do not override this! Most likely, the inner function `_load()`
         is what you want to override.
         """
-        self.gem.load_ges(data)
+        self.gem.ges_load(data)
         if self.object_id in data.keys():
             self._load(data)
         return self
@@ -304,40 +417,40 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         is what you want to override.
         """
         self._push(window)
+    
+    # Layout
 
-    def init_window(self, window):
-        """
-        Do not override this! Most likely, the inner function `_init_window())`
-        is what you want to override.
-        """
-        self.push(window)
-        self._init_window(window)
-
-    @initafter
     def get_sge(self) -> sg.Element: # One sg element
         """
         Do not override this! Most likely, the inner function `_get_sge()`
         is what you want to override.
         """
-        return self._get_sge()
+        self.init_before_layout()
+        rv = self._get_sge()
+        self.init_after_layout()
+        return rv
 
-    @initafter
     def get_row(self) -> list: # A list of sg elements
         """
         Do not override this! Most likely, the inner function `_get_row()`
         is what you want to override.
         """
-        return self._get_row()
+        self.init_before_layout()
+        rv = self._get_row()
+        self.init_after_layout()
+        return rv
 
-    @initafter
     def get_layout(self) -> list[list]: # A list of lists of sg elements
         """
         Do not override this! Most likely, the inner function `_get_layout()`
         is what you want to override.
         """
-        return self._get_layout()
+        self.init_before_layout()
+        rv = self._get_layout()
+        self.init_after_layout()
+        return rv
     
-    ##
+    #
 
     def handle_event(self, context):
         rv = WRC(EventManager.handle_event(self, context))
@@ -362,13 +475,13 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         """
         pass
     
-    ## sg kwargs
+    # sg kwargs
 
-    def set_sg_kwargs(self, key_prefix, overwrite_kwargs=True, **kwargs):
-        if not key_prefix in self.sg_kwargs:
-            self.sg_kwargs[key_prefix] = {}
-            self.sg_kwargs[key_prefix].update(self.sg_kwargs_all_dict)
-        sg_kwargs = self.sg_kwargs[key_prefix]
+    def set_sg_kwargs(self, key_name, overwrite_kwargs=True, **kwargs):
+        if not key_name in self.sg_kwargs:
+            self.sg_kwargs[key_name] = {}
+            self.sg_kwargs[key_name].update(self.sg_kwargs_all_dict)
+        sg_kwargs = self.sg_kwargs[key_name]
         for k, v in kwargs.items():
             if overwrite_kwargs or not k in sg_kwargs:
                 sg_kwargs[k] = v
@@ -376,25 +489,19 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     
     # Calling during init ensures dict in kwargs is set before get_layout() is called,
     #     as well as not overwriting values set at time of object instantiation
-    def init_sg_kwargs(self, key_prefix, **kwargs):
-        self.set_sg_kwargs(key_prefix, overwrite_kwargs=False, **kwargs)
-        return self
+    def init_sg_kwargs(self, key_name, **kwargs):
+        return self.set_sg_kwargs(key_name, overwrite_kwargs=False, **kwargs)
     
-    def sg_kwargs_all(self, **kwargs):
-        self.sg_kwargs_all_dict.update(kwargs)
-        for key_prefix in self.sg_kwargs.keys():
-            self.set_sg_kwargs(key_prefix, **kwargs)
-        return self
-    
-    ## Other
+    #
     
     def load_value(self, value):
         """Load a value as if it was stored data for this ge"""
+        self.init_before_layout()
         return self.load({self.object_id: value})
 
     @classmethod
-    def make_key(cls, key_prefix, key_root):
-        return str(key_prefix) + str(key_root)
+    def make_key(cls, key_name, key_root):
+        return str(key_name) + str(key_root)
     
     def key_rcm(self, rcm_name, *args):
         """Get key for a right click menu item"""
@@ -403,8 +510,11 @@ class GuiElement(EventManager, GuiElementLayoutManager):
             menu = menu[arg]
         return menu.get_event_key()
 
-    def add_key(self, key_prefix):
-        self.keys[key_prefix] = GuiElement.make_key(key_prefix, self.object_id)
+    def add_key(self, key_name):
+        self.keys[key_name] = GuiElement.make_key(key_name, self.object_id)
+    
+    def get_key(self, key_name):
+        return self.keys[key_name]
 
     def add_ge(self, ge):
         self.gem.add_ge(ge)
@@ -412,8 +522,8 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     def get_ge(self, object_id) -> GuiElement | None:
         return self.gem.get_ge(object_id)
     
-    def ges(self, key_prefix):
-        return self.gem[self.keys[key_prefix]]    
+    def ges(self, key_name):
+        return self.gem[self.keys[key_name]]    
     
     def disable(self, window, value=True):
         self.disabled = value

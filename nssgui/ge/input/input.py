@@ -4,7 +4,7 @@ from nssgui.style import colors
 from nssgui.gui_element import *
 
 
-class Input(GuiElement):
+class Input(GuiElement.iRow, GuiElement):
 
     TYPE_SMALL = 'small'
     TYPE_INT = 'int'
@@ -17,7 +17,7 @@ class Input(GuiElement):
             negative_invalid=False,
             blank_invalid=False,
             has_validity=False) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.type = type
         self.negative_invalid = negative_invalid
@@ -44,7 +44,7 @@ class Input(GuiElement):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         if self.type == Input.TYPE_SMALL or self.type == Input.TYPE_INT:
             self.init_sg_kwargs('In', size=(5, 1))
         else:
@@ -73,7 +73,7 @@ class Input(GuiElement):
             sg_in.update(self.value)
         self.push_validity(window)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events

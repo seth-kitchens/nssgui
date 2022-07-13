@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class InfoButton(GuiElement):
+class InfoButton(GuiElement.iSge, GuiElement):
 
     def __init__(self,
             object_id,
@@ -26,7 +26,7 @@ class InfoButton(GuiElement):
             title='Info', 
             header=None, 
             subheader=None) -> None:
-        super().__init__(object_id, GuiElement.layout_types.SGE)
+        super().__init__(object_id)
         self.text = text
         self.info_def = info_def
         self.title = title
@@ -44,7 +44,7 @@ class InfoButton(GuiElement):
 
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Info')
     
     # Keys and Events

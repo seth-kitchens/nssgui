@@ -130,19 +130,19 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
     # Data
 
     def save(self, data):
-        self.gem.save_ges(data)
+        self.gem.ges_save(data)
 
     def load(self, data):
-        self.gem.load_ges(data)
+        self.gem.ges_load(data)
 
     def pull(self, values):
-        self.gem.pull_ges(values)
+        self.gem.ges_pull(values)
 
     def push(self, window):
-        self.gem.push_ges(window)
+        self.gem.ges_push(window)
 
-    def init_window(self, window):
-        self.gem.init_window_ges(window)
+    def init_window_finalized(self, window):
+        self.gem.ges_init_window_finalized(window)
 
     # Other
 
@@ -247,7 +247,7 @@ class AbstractBlockingWindow(AbstractWindow):
         self.window = sg.Window(self.title, layout, finalize=True)
         context.push(self.window)
         context.focus()
-        self.init_window(self.window)
+        self.init_window_finalized(self.window)
         nss_sg.center_window(self.window)
         rv = EventLoop(self).run(context)
         rv.closed_window()
@@ -280,8 +280,8 @@ class AbstractAsyncWindow(AbstractWindow):
         self.window_kwargs = window_kwargs if window_kwargs != None else {}
         super().__init__(title=title, data=data)
 
-    def add_key(self, key_prefix):
-        self.keys[key_prefix] = key_prefix + self.window_id
+    def add_key(self, key_name):
+        self.keys[key_name] = key_name + self.window_id
     
     def open(self, context:WindowContext):
         super().open(context)
@@ -353,8 +353,8 @@ class ProgressWindow(AbstractAsyncWindow):
     
     ### ProgressWindow
 
-    def __getitem__(self, key_prefix):
-        return self.keys[key_prefix]
+    def __getitem__(self, key_name):
+        return self.keys[key_name]
     
     def update_progress(self, progress:float):
         self.window[self.keys['Progress']].UpdateBar(progress * 1000)

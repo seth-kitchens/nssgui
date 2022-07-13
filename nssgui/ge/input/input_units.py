@@ -7,7 +7,7 @@ from nssgui import g as nss_g
 from nssgui import ge as nss_el
 
 
-class InputUnits(GuiElement):
+class InputUnits(GuiElement.iRow, GuiElement):
 
     def __init__(self,
             object_id,
@@ -19,7 +19,7 @@ class InputUnits(GuiElement):
             has_validity=False,
             auto_scale_units=None) -> None:
         check_if_subclasses(units, [unit.Unit])
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.default_text_in = text
         self.unit_value = None
@@ -39,7 +39,7 @@ class InputUnits(GuiElement):
     # Layout
     
     def _get_row(self):
-        self.init()
+        #self.init()
         self.gem.add_ge(nss_el.Dropdown(self.keys['Unit'], '', self.unit_value.get_symbols(), self.unit_value.get_degree_symbol()))
         row = [
             sg.Text(self.text),
@@ -50,7 +50,7 @@ class InputUnits(GuiElement):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('In', size=(7, 1))
         self.init_sg_kwargs('Unit')
 
@@ -86,7 +86,7 @@ class InputUnits(GuiElement):
         self.push_validity(window)
         self.ges('Unit').update(window, self.unit_value.get_degree_symbol())
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events

@@ -2,10 +2,10 @@ import PySimpleGUI as sg
 
 from nssgui.gui_element import GuiElement
 
-class StatusBar(GuiElement):
+class StatusBar(GuiElement.iRow, GuiElement):
 
     def __init__(self, object_id, text='', text_color='white', remove_padding=True) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.text_color = text_color
         self.remove_padding = remove_padding
@@ -35,7 +35,7 @@ class StatusBar(GuiElement):
     def _push(self, window):
         window[self.keys['Status']](self.text, text_color=self.text_color)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
 
     # Keys and Events

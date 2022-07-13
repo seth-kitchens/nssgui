@@ -6,10 +6,10 @@ from nssgui.style import colors
 from nssgui.gui_element import *
 
 
-class Path(GuiElement):
+class Path(GuiElement.iRow, GuiElement):
 
     def __init__(self, object_id, text, blank_invalid=False, has_validity=False) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.path = ''
         self.blank_invalid = blank_invalid
@@ -33,7 +33,7 @@ class Path(GuiElement):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Path')
         self.init_sg_kwargs('Browse')
 
@@ -67,7 +67,7 @@ class Path(GuiElement):
             path = self.path
         window[self.keys['Path']](path)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events

@@ -3,10 +3,10 @@ import PySimpleGUI as sg
 from nssgui.gui_element import *
 
 
-class Dropdown(GuiElement):
+class Dropdown(GuiElement.iRow, GuiElement):
     
     def __init__(self, object_id, text, options, enable_events=True) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.options = options
         self.enable_events = enable_events
@@ -23,7 +23,7 @@ class Dropdown(GuiElement):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         self.init_sg_kwargs('Dropdown')
     
     def _save(self, data):
@@ -40,7 +40,7 @@ class Dropdown(GuiElement):
     def _push(self, window):
         window[self.keys['Dropdown']](self.selection)
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
@@ -58,6 +58,7 @@ class Dropdown(GuiElement):
         self.set_sg_kwargs('Dropdown', **kwargs)
 
     def get_sge_dropdown(self):
+        self.init_before_layout()
         if not self.selection:
             self.selection = self.options[0]
         return sg.Combo(self.options, self.selection,

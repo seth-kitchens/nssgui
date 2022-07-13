@@ -6,7 +6,7 @@ from nssgui.ge.containers.list_container import ListContainer
 
 
 # Show the contained list as a string
-class StringContainer(ListContainer):
+class StringContainer(GuiElement.iRow, ListContainer):
     
     def __init__(self, 
             text,
@@ -14,8 +14,8 @@ class StringContainer(ListContainer):
             folder_browse=False,
             blank_invalid=False,
             has_validity=False) -> None:
-        check_if_instances(ge, [GuiElement, iLength, iEdittable, iStringable])
-        super().__init__(ge, GuiElement.layout_types.ROW)
+        check_if_instances(ge, [GuiElement, GuiElement.iLength, GuiElement.iEdittable, GuiElement.iStringable])
+        super().__init__(ge)
         self.text = text
         self.folder_browse = folder_browse
         self.blank_invalid = blank_invalid

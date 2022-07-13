@@ -7,12 +7,12 @@ from nssgui.gui_element import *
 
 class ListContainer(GuiElement, ABC):
     
-    def __init__(self, ge:GuiElement, layout_type) -> None:
-        check_if_instances(ge, [GuiElement, iLength])
+    def __init__(self, ge:GuiElement) -> None:
+        check_if_instances(ge, [GuiElement, GuiElement.iLength])
         self.ge = ge
         self.contained_object_id = ge.object_id
         object_id = 'ListContainer(' + self.contained_object_id + ')'
-        super().__init__(object_id, layout_type)
+        super().__init__(object_id)
         self.gem.add_ge(ge)
     
     ### GuiElement
@@ -20,7 +20,7 @@ class ListContainer(GuiElement, ABC):
     # Layout
     # Data
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
@@ -32,7 +32,7 @@ class ListContainer(GuiElement, ABC):
     class WindowEditContained(AbstractBlockingWindow):
         
         def __init__(self, title, contained) -> None:
-            check_if_instances(contained, [iEdittable])
+            check_if_instances(contained, [GuiElement.iEdittable])
             self.contained:GuiElement = contained
             super().__init__(title)
         

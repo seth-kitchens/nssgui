@@ -11,7 +11,7 @@ from nssgui.sg import wrapped as sg_wrapped
 __all__ = ['TextList']
 
 
-class TextList(GuiElement, iLength, iStringable, iEdittable):
+class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iStringable, GuiElement.iEdittable):
     
     def __init__(self,
             object_id,
@@ -20,7 +20,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             strip:str|Iterable='',
             empty_text='',
             allow_duplicates=False):
-        super().__init__(object_id, GuiElement.layout_types.LAYOUT)
+        super().__init__(object_id)
         self.delim = delim
         if isinstance(border, str):
             self.lborder = border
@@ -90,7 +90,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
     
     # Data
 
-    def _init(self):
+    def _init_before_layout(self):
         pass
     
     def _save(self, data):
@@ -115,7 +115,7 @@ class TextList(GuiElement, iLength, iStringable, iEdittable):
             sge_listbox.update(set_to_index=[])
             sge_listbox.set_right_click_menu(self.right_click_menus['ListboxNone'].get_def())
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.push(window)
     

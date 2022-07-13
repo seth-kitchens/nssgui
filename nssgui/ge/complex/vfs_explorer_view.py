@@ -18,11 +18,11 @@ from nssgui import sg as nss_sg
 __all__ = ['VFSExplorerView']
 
 
-class VFSExplorerView(GuiElement):
+class VFSExplorerView(GuiElement.iLayout, GuiElement):
     
     def __init__(self, object_id, vfs_explorer, read_only=False) -> None:
         self.read_only = read_only
-        super().__init__(object_id, GuiElement.layout_types.LAYOUT)
+        super().__init__(object_id)
         self.vfs_explorer:VFSExplorer = vfs_explorer
         self.vfs:VFS = vfs_explorer.vfs
         self.display_list:list[str] = []
@@ -145,7 +145,7 @@ class VFSExplorerView(GuiElement):
         if self.selection:
             window[self.keys['Listbox']].set_value(self.selected_row)
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.vfs_explorer.refresh_current_dir()
         self.push(window)

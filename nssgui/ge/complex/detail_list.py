@@ -28,14 +28,14 @@ def clone_string_unique(s, not_in_strings=None):
     return s + str(i)
 
 
-class DetailList(GuiElement, iLength, ABC):
+class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
     
     def __init__(self, object_id, lstrip=' \n', rstrip=' \n'):
         """
         An abstract class representing an edittable dict: 
             item_dict:dict[item:str, data:Any]
         """
-        super().__init__(object_id, GuiElement.layout_types.LAYOUT)
+        super().__init__(object_id)
         self.lstrip = lstrip
         self.rstrip = rstrip
         self.item_dict = OrderedDict()
@@ -133,7 +133,7 @@ class DetailList(GuiElement, iLength, ABC):
             sge_listbox.set_right_click_menu(self.right_click_menus['ListboxNone'].get_def())
         self.update_details(window)
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.push(window)
     
