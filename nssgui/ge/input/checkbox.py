@@ -16,12 +16,9 @@ class Checkbox(GuiElement.iSge, GuiElement):
     
     def _get_sge(self):
         return sg.Checkbox(self.text,
-            key=self.keys['Checkbox'], default=self.value, **self.sg_kwargs['Checkbox'])
+            key=self.keys['Checkbox'], default=self.value, **self.sg_kwargs('Checkbox'))
     
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Checkbox')
     
     def _save(self, data):
         data[self.object_id] = self.value
@@ -55,7 +52,7 @@ class Checkbox(GuiElement.iSge, GuiElement):
     # Other
     
     def sg_kwargs_checkbox(self, **kwargs):
-        return self.set_sg_kwargs('Checkbox', **kwargs)
+        return self._set_sg_kwargs('Checkbox', **kwargs)
     
     ### Checkbox
 

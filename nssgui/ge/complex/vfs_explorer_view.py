@@ -51,7 +51,7 @@ class VFSExplorerView(GuiElement.iLayout, GuiElement):
             sg.Text('Current'),
             sg.Sizer(5, 0),
             *self.row(nss_el.Input(self.keys['CurrentPath'], '') \
-                .set_sg_kwargs('In', readonly=True, expand_x=True) \
+                ._set_sg_kwargs('In', readonly=True, expand_x=True) \
                 .load_value('""'))
         ]
         return row_current_path

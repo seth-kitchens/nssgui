@@ -22,9 +22,6 @@ class Dropdown(GuiElement.iRow, GuiElement):
         return row
     
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Dropdown')
     
     def _save(self, data):
         data[self.object_id] = self.selection
@@ -55,15 +52,14 @@ class Dropdown(GuiElement.iRow, GuiElement):
     # Others
 
     def sg_kwargs_dropdown(self, **kwargs):
-        self.set_sg_kwargs('Dropdown', **kwargs)
+        self._set_sg_kwargs('Dropdown', **kwargs)
 
     def get_sge_dropdown(self):
-        self.init_before_layout()
         if not self.selection:
             self.selection = self.options[0]
         return sg.Combo(self.options, self.selection,
             key=self.keys['Dropdown'], enable_events=self.enable_events,
-            **self.sg_kwargs['Dropdown'])
+            **self.sg_kwargs('Dropdown'))
     
     ### Dropdown
 

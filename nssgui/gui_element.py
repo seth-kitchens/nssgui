@@ -31,8 +31,6 @@ def check_if_subclasses(name, types:list):
             raise TypeError('Obj ' + str(name) + ' is not a subclass of ' + str(t))
 
 
-# GuiElement Manager
-
 class GuiElementLayoutManager(ABC):
 
     @abstractmethod
@@ -131,7 +129,6 @@ class GuiElementManager(GuiElementLayoutManager):
         self.gem_keys[unique_string] = key
         return key
 
-# GuiElement
 
 class GuiElement(EventManager, GuiElementLayoutManager):
 
@@ -230,22 +227,31 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         followed by a get (sge|row|layout) function, which may be called again later. Some of
         initialization is delayed until a layout function is first called.
 
-        - External: GuiElement()
-        
-        - __init__()
-            - define_keys()
+        - External: GuiElement subclass's constructor
+            - `__init__()`
+            - `define_keys()`
             - internal GuiElementManager constructed
-            - define_menus()
-        - init():  OPTIONAL, needed for function calls between instantiation and getting the layout
-            - init_before_layout():  (returns if already called)
-                - init_before_layout
-        - functions called in calling function, e.g. `load_value`
-        - `get_sge()` OR `get_row()` OR `get_layout()` is called
-            - init_before_layout(): (returns if already called)
-                - _init_before_layout()
+            - `define_menus()`
+        - External: Any initializing functions, e.g. `load_value` (note that many are chainable)
+        - External: `get_sge()` OR `get_row()` OR `get_layout()`
             - `_get_sge()` OR `_get_row()` OR `_get_layout()`
-            - init_after_layout()
-                - define_events()
+            - `define_events()`
+        - External: `init_window_finalized()` after sg.Window is finalized
+            - `_init_window_finalized()`
+        
+        ### SG Element Kwargs
+
+        GuiElements represent one or more SG Elements. To easily provide a way to pass kwargs to
+        sg elements, you may use `sg_kwargs` related functions.
+        - Make a `sg_kwargs_<key_name>(self, **kwargs)` function, for each sg element you want to
+        provide kwarg passing for
+            - Use `_set_sg_kwargs('key_name')` to set the values
+        - In the layout function (_get_layout(), etc):
+            - Use `default_sg_kwargs()` to define defaults if needed
+            - Add `**self._sg_kwargs['key_name']` to the elements' constructors
+        
+        Making the functions give clear indication that sg_kwargs are supported for the element,
+        rather just adding parameter and expecting use of `_set_sg_kwargs()`.
 
         """
         super().__init__(debug_id='GE:' + object_id)
@@ -258,20 +264,16 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         self.define_keys()
         self.gem = GuiElementManager()
         self.requestable_events = {}
-        self.sg_kwargs = {}
-        self.sg_kwargs_all_dict = {}
-        self.sg_kwargs_functions = {}
+        self._sg_kwargs:dict[str, dict[str, str]] = {}
         self.disabled = False
         self.has_validity = False
         self.prev_click_time = 0
         self.prev_click_id = None
-        self.init_before_layout_finished = False
-        self.init_after_layout_finished = False
+        self.events_defined = False
         self.init_window_finalized_finished = False
         self.right_click_menus = MenuDict()
         self.define_menus()
         
-    
     ## Abstract / Virtual
 
     # Layout
@@ -311,12 +313,6 @@ class GuiElement(EventManager, GuiElementLayoutManager):
 
     # Init
     
-    def _init_before_layout(self):
-        pass
-
-    def _init_after_layout(self):
-        pass
-    
     def _init_window_finalized(self, window):
         pass
 
@@ -337,31 +333,6 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     ##
 
     # Init
-
-    def init_before_layout(self):
-        """
-        Do not override this! Most likely, the inner function `_init_before_layout()`
-        is what you want to override.
-        """
-        if self.init_before_layout_finished:
-            return self
-        self._init_before_layout()
-        self.init_before_layout_finished = True
-        return self
-    
-    init = init_before_layout
-
-    def init_after_layout(self):
-        """
-        Do not override this! Most likely, the inner function `_init_after_layout()`
-        is what you want to override.
-        """
-        if self.init_after_layout_finished:
-            return self
-        self.define_events()
-        self._init_after_layout()
-        self.init_after_layout_finished = True
-        return self
 
     def init_window_finalized(self, window):
         """
@@ -425,9 +396,10 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         Do not override this! Most likely, the inner function `_get_sge()`
         is what you want to override.
         """
-        self.init_before_layout()
         rv = self._get_sge()
-        self.init_after_layout()
+        if not self.events_defined:
+            self.define_events()
+            self.events_defined = True
         return rv
 
     def get_row(self) -> list: # A list of sg elements
@@ -435,9 +407,10 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         Do not override this! Most likely, the inner function `_get_row()`
         is what you want to override.
         """
-        self.init_before_layout()
         rv = self._get_row()
-        self.init_after_layout()
+        if not self.events_defined:
+            self.define_events()
+            self.events_defined = True
         return rv
 
     def get_layout(self) -> list[list]: # A list of lists of sg elements
@@ -445,9 +418,10 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         Do not override this! Most likely, the inner function `_get_layout()`
         is what you want to override.
         """
-        self.init_before_layout()
         rv = self._get_layout()
-        self.init_after_layout()
+        if not self.events_defined:
+            self.define_events()
+            self.events_defined = True
         return rv
     
     #
@@ -477,26 +451,28 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     
     # sg kwargs
 
-    def set_sg_kwargs(self, key_name, overwrite_kwargs=True, **kwargs):
-        if not key_name in self.sg_kwargs:
-            self.sg_kwargs[key_name] = {}
-            self.sg_kwargs[key_name].update(self.sg_kwargs_all_dict)
-        sg_kwargs = self.sg_kwargs[key_name]
+    def _set_sg_kwargs(self, key_name, overwrite_kwargs=True, **kwargs):
+        if not key_name in self._sg_kwargs:
+            self._sg_kwargs[key_name] = {}
+        sg_kwargs = self._sg_kwargs[key_name]
         for k, v in kwargs.items():
             if overwrite_kwargs or not k in sg_kwargs:
                 sg_kwargs[k] = v
         return self
     
-    # Calling during init ensures dict in kwargs is set before get_layout() is called,
-    #     as well as not overwriting values set at time of object instantiation
-    def init_sg_kwargs(self, key_name, **kwargs):
-        return self.set_sg_kwargs(key_name, overwrite_kwargs=False, **kwargs)
+    def sg_kwargs(self, key_name):
+        if key_name in self._sg_kwargs:
+            return self._sg_kwargs[key_name]
+        return {}
+    
+    def default_sg_kwargs(self, key_name, **kwargs):
+        """Call before layout to set default for passed sg kwargs"""
+        return self._set_sg_kwargs(key_name, overwrite_kwargs=False, **kwargs)
     
     #
     
     def load_value(self, value):
         """Load a value as if it was stored data for this ge"""
-        self.init_before_layout()
         return self.load({self.object_id: value})
 
     @classmethod

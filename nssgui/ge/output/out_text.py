@@ -17,13 +17,10 @@ class OutText(GuiElement.iRow, GuiElement):
         row = []
         if self.label:
             row.append(sg.Text(self.label))
-        row.append(sg.Text(self.value, key=self.keys['Out'], **self.sg_kwargs['Out']))
+        row.append(sg.Text(self.value, key=self.keys['Out'], **self.sg_kwargs('Out')))
         return row
     
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Out')
 
     def _save(self, data):
         data[self.object_id] = self.value
@@ -49,7 +46,7 @@ class OutText(GuiElement.iRow, GuiElement):
     # Other
 
     def sg_kwargs_out(self, **kwargs):
-        return self.set_sg_kwargs(self, **kwargs)
+        return self._set_sg_kwargs(self, **kwargs)
     
     ### OutText
 

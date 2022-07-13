@@ -89,9 +89,6 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             right_click_selects=True)    
     
     # Data
-
-    def _init_before_layout(self):
-        pass
     
     def _save(self, data):
         if not self.allow_duplicates:

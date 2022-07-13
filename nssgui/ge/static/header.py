@@ -14,12 +14,10 @@ class Header(GuiElement.iSge, GuiElement):
     # Layout
     
     def _get_sge(self):
-        return sg.Text(self.text, key=self.keys['Text'], **self.sg_kwargs['Text'])
+        self.default_sg_kwargs('Text', text_color='gold')
+        return sg.Text(self.text, key=self.keys['Text'], **self._sg_kwargs('Text'))
     
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Text', text_color='gold')
 
     # Keys and Events
     
@@ -33,4 +31,4 @@ class Header(GuiElement.iSge, GuiElement):
     # Other
 
     def sg_kwargs_text(self, **kwargs):
-        return self.set_sg_kwargs('Text', **kwargs)
+        return self._set_sg_kwargs('Text', **kwargs)

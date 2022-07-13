@@ -56,13 +56,10 @@ class CycleButton(GuiElement.iRow, GuiElement):
 
     def get_sge_button(self):
         text = self.get_button_text()
-        sge = sg.Button(text, key=self.keys['Button'], **self.sg_kwargs['Button'])
+        sge = sg.Button(text, key=self.keys['Button'], **self.sg_kwargs('Button'))
         return sge
 
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Button')
     
     def _load(self, data):
         value = data[self.object_id]
@@ -93,7 +90,7 @@ class CycleButton(GuiElement.iRow, GuiElement):
     # Other
     
     def sg_kwargs_button(self, **kwargs):
-        self.set_sg_kwargs('Button', **kwargs)
+        self._set_sg_kwargs('Button', **kwargs)
         return self
     
     ### CycleButton

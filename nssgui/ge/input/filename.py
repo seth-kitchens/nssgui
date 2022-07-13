@@ -16,18 +16,15 @@ class Filename(GuiElement.iRow, GuiElement):
     # Layout
     
     def _get_row(self):
+        self.default_sg_kwargs('Extension', size=(6, 1))
         row = [
             sg.Text(self.text),
-            sg.In(self.name, key=self.keys['Name'], **self.sg_kwargs['Name']),
-            sg.In(self.extension, key=self.keys['Extension'], **self.sg_kwargs['Extension'])
+            sg.In(self.name, key=self.keys['Name'], **self.sg_kwargs('Name')),
+            sg.In(self.extension, key=self.keys['Extension'], **self.sg_kwargs('Extension'))
         ]
         return row
 
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Name')
-        self.init_sg_kwargs('Extension', size=(6, 1))
 
     def _save(self, data):
         data[self.object_id] = [self.name, self.extension]
@@ -60,10 +57,10 @@ class Filename(GuiElement.iRow, GuiElement):
     # Other
     
     def sg_kwargs_name(self, **kwargs):
-        return self.set_sg_kwargs('Name', **kwargs)
+        return self._set_sg_kwargs('Name', **kwargs)
 
     def sg_kwargs_extension(self, **kwargs):
-        return self.set_sg_kwargs('Extension', **kwargs)
+        return self._set_sg_kwargs('Extension', **kwargs)
     
     ### Filename
 

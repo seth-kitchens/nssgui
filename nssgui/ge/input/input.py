@@ -35,20 +35,16 @@ class Input(GuiElement.iRow, GuiElement):
     # Layout
     
     def _get_row(self):
+        if self.type == Input.TYPE_SMALL or self.type == Input.TYPE_INT:
+            self.default_sg_kwargs('In', size=(5, 1))
         row = []
         if self.text:
             row.append(sg.Text(self.text))
         row.append(sg.In(
-            self.value, key=self.keys['In'], enable_events=True, **self.sg_kwargs['In']))
+            self.value, key=self.keys['In'], enable_events=True, **self.sg_kwargs('In')))
         return row
     
     # Data
-
-    def _init_before_layout(self):
-        if self.type == Input.TYPE_SMALL or self.type == Input.TYPE_INT:
-            self.init_sg_kwargs('In', size=(5, 1))
-        else:
-            self.init_sg_kwargs('In')
 
     def _save(self, data):
         if not self.is_valid():
@@ -92,7 +88,7 @@ class Input(GuiElement.iRow, GuiElement):
     # Other
 
     def sg_kwargs_in(self, **kwargs):
-        return self.set_sg_kwargs('In', **kwargs)
+        return self._set_sg_kwargs('In', **kwargs)
     
     ### iValid
     

@@ -40,12 +40,9 @@ class InfoButton(GuiElement.iSge, GuiElement):
     def _get_sge(self):
         if len(self.text) < 2:
             self.sg_kwargs_info(size=(2, 1))
-        return sg.Button(self.text, key=self.keys['Info'], **self.sg_kwargs['Info'])
+        return sg.Button(self.text, key=self.keys['Info'], **self.sg_kwargs('Info'))
 
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Info')
     
     # Keys and Events
 
@@ -62,7 +59,7 @@ class InfoButton(GuiElement.iSge, GuiElement):
     # Other
 
     def sg_kwargs_info(self, **kwargs):
-        self.set_sg_kwargs('Info', **kwargs)
+        self._set_sg_kwargs('Info', **kwargs)
 
     ### InfoButton
 

@@ -57,13 +57,10 @@ class Radio(GuiElement.iRow, GuiElement):
             default = (key == self.selected_key)
             text = self.v_to_t[value]
             row.append(sg.Radio(text, self.groupid,
-                key=key, default=default, enable_events=True, **self.sg_kwargs['Radio']))
+                key=key, default=default, enable_events=True, **self.sg_kwargs('Radio')))
         return row
     
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('Radio')
 
     def _save(self, data):
         data[self.object_id] = self.get_selected_value()
@@ -100,7 +97,7 @@ class Radio(GuiElement.iRow, GuiElement):
     # Other
 
     def sg_kwargs_radio(self, **kwargs):
-        return self.set_sg_kwargs('Radio', **kwargs)
+        return self._set_sg_kwargs('Radio', **kwargs)
     
     ### Radio
 

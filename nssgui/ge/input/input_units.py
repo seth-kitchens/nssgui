@@ -39,20 +39,16 @@ class InputUnits(GuiElement.iRow, GuiElement):
     # Layout
     
     def _get_row(self):
-        #self.init()
+        self.default_sg_kwargs('In', size=(7, 1))
         self.gem.add_ge(nss_el.Dropdown(self.keys['Unit'], '', self.unit_value.get_symbols(), self.unit_value.get_degree_symbol()))
         row = [
             sg.Text(self.text),
-            sg.In(self.unit_value.get_value(), key=self.keys['In'], enable_events=True, **self.sg_kwargs['In']),
+            sg.In(self.unit_value.get_value(), key=self.keys['In'], enable_events=True, **self.sg_kwargs('In')),
             self.ges('Unit').get_sge_dropdown()
         ]
         return row
     
     # Data
-
-    def _init_before_layout(self):
-        self.init_sg_kwargs('In', size=(7, 1))
-        self.init_sg_kwargs('Unit')
 
     def _save(self, data):
         if not self.is_valid():
@@ -120,10 +116,10 @@ class InputUnits(GuiElement.iRow, GuiElement):
     # Other
 
     def sg_kwargs_in(self, **kwargs):
-        self.set_sg_kwargs('In', **kwargs)
+        self._set_sg_kwargs('In', **kwargs)
 
     def sg_kwargs_unit(self, **kwargs):
-        self.set_sg_kwargs('Unit', **kwargs)
+        self._set_sg_kwargs('Unit', **kwargs)
     
     ### iValid
     
