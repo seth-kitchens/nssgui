@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import time
 from functools import wraps
+from typing import Iterable
 
 import PySimpleGUI as sg
 
@@ -16,7 +17,8 @@ __all__ = [
     'check_if_subclasses',
     'GuiElement',
     'GuiElementManager',
-    'GuiElementLayoutManager'
+    'GuiElementLayoutManager',
+    'GuiElementContainer'
 ]
 
 
@@ -91,24 +93,42 @@ class GuiElementManager(GuiElementLayoutManager):
         if object_id not in self.ges.keys():
             return None
         return self.ges[object_id]
+
+    def for_ges(self, func:function, break_func:function|None=None) -> list:
+        """
+        Iterates over ges, calling func(ge) on each, returning the rvs as a list.
+        If break_func is not None, then break_func(rv) will be called on every rv,
+        breaking then.
+        """
+        rvs = []
+        if break_func is None:
+            for ge in self.ges.values():
+                rvs.append(func(ge))
+        else:
+            for ge in self.ges.values():
+                rvs.append(func(ge))
+                if break_func(rvs[-1]):
+                    break
+        return rvs
+        
     
-    def ges_save(self, data):
+    def for_ges_save(self, data):
         for ge in self.ges.values():
             ge.save(data)
 
-    def ges_load(self, data):
+    def for_ges_load(self, data):
         for ge in self.ges.values():
             ge.load(data)
 
-    def ges_init_window_finalized(self, window):
+    def for_ges_init_window_finalized(self, window):
         for ge in self.ges.values():
             ge.init_window_finalized(window)
 
-    def ges_pull(self, values):
+    def for_ges_pull(self, values):
         for ge in self.ges.values():
             ge.pull(values)
 
-    def ges_push(self, window):
+    def for_ges_push(self, window):
         for ge in self.ges.values():
             ge.push(window)
 
@@ -128,7 +148,6 @@ class GuiElementManager(GuiElementLayoutManager):
         GuiElementManager.num_gem_keys += 1
         self.gem_keys[unique_string] = key
         return key
-
 
 class GuiElement(EventManager, GuiElementLayoutManager):
 
@@ -206,53 +225,13 @@ class GuiElement(EventManager, GuiElementLayoutManager):
 
     def __init__(self, object_id) -> None:
         """
-        ## GuiElement
-
-        ### Subclassing
-
-        - Subclass iSge, iRow or iLayout before GuiElement.
-        Example: `class mygesubclass(GuiElement.iRow, GuiElement)`
-        - Define layout in the respective method:
-            - `_get_sge()` OR
-            - `_get_row()` OR
-            - `_get_layout()`
-        - Override definition methods needed
-            - `define_keys()`
-            - `define_events()`
-            - `define_menus()`
+        # GuiElement
         
-        ### Initialization
+        A logical gui element in a window, comprising of one or more PySimpleGUi elements. 
+        This is the most fundamental class in nssgui. 
 
-        GuiElements are made to be defined within a layout definition, where instantiation is
-        followed by a get (sge|row|layout) function, which may be called again later. Some of
-        initialization is delayed until a layout function is first called.
-
-        - External: GuiElement subclass's constructor
-            - `__init__()`
-            - `define_keys()`
-            - internal GuiElementManager constructed
-            - `define_menus()`
-        - External: Any initializing functions, e.g. `load_value` (note that many are chainable)
-        - External: `get_sge()` OR `get_row()` OR `get_layout()`
-            - `_get_sge()` OR `_get_row()` OR `_get_layout()`
-            - `define_events()`
-        - External: `init_window_finalized()` after sg.Window is finalized
-            - `_init_window_finalized()`
-        
-        ### SG Element Kwargs
-
-        GuiElements represent one or more SG Elements. To easily provide a way to pass kwargs to
-        sg elements, you may use `sg_kwargs` related functions.
-        - Make a `sg_kwargs_<key_name>(self, **kwargs)` function, for each sg element you want to
-        provide kwarg passing for
-            - Use `_set_sg_kwargs('key_name')` to set the values
-        - In the layout function (_get_layout(), etc):
-            - Use `default_sg_kwargs()` to define defaults if needed
-            - Add `**self._sg_kwargs['key_name']` to the elements' constructors
-        
-        Making the functions give clear indication that sg_kwargs are supported for the element,
-        rather just adding parameter and expecting use of `_set_sg_kwargs()`.
-
+        Temporarily, all major concepts are detailed in README.md, including subclassing
+        this class.
         """
         super().__init__(debug_id='GE:' + object_id)
         if not (issubclass(self.__class__, GuiElement.iSge)
@@ -260,10 +239,9 @@ class GuiElement(EventManager, GuiElementLayoutManager):
             or  issubclass(self.__class__, GuiElement.iLayout)):
             raise TypeError('A GuiElement class must inherit one of: iSge, iRow, iLayout')
         self.object_id = object_id
-        self.keys = {}
+        self.keys = {} # NssNamedKeys
         self.define_keys()
         self.gem = GuiElementManager()
-        self.requestable_events = {}
         self._sg_kwargs:dict[str, dict[str, str]] = {}
         self.disabled = False
         self.has_validity = False
@@ -284,7 +262,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         Do not override this! This should be overridden by one of:
         `GuiElement.iSge` `GuiElement.iRow` `GuiElement.iLayout`
 
-        Then, that interface's respective `_get` method must be defined.
+        Then, that interface's respective `_get` method must be defined. I
         """
         pass
 
@@ -353,7 +331,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         Do not override this! Most likely, the inner function `_save()`
         is what you want to override.
         """
-        self.gem.ges_save(data)
+        self.gem.for_ges_save(data)
         if self.disabled:
             data[self.object_id] = None
         elif not self.is_valid():
@@ -367,7 +345,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         Do not override this! Most likely, the inner function `_load()`
         is what you want to override.
         """
-        self.gem.ges_load(data)
+        self.gem.for_ges_load(data)
         if self.object_id in data.keys():
             self._load(data)
         return self
@@ -461,6 +439,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         return self
     
     def sg_kwargs(self, key_name):
+        """Get an sg kwargs dict for the specified key name. Returns empty dict if not found."""
         if key_name in self._sg_kwargs:
             return self._sg_kwargs[key_name]
         return {}
@@ -488,9 +467,6 @@ class GuiElement(EventManager, GuiElementLayoutManager):
 
     def add_key(self, key_name):
         self.keys[key_name] = GuiElement.make_key(key_name, self.object_id)
-    
-    def get_key(self, key_name):
-        return self.keys[key_name]
 
     def add_ge(self, ge):
         self.gem.add_ge(ge)
@@ -530,3 +506,20 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     Alias for check_double_click() for more clearly showing that
     ignoring the is_double_click rv is intentional
     """
+
+
+class GuiElementContainer(GuiElement):
+    def __init__(self, contained:GuiElement|Iterable[GuiElement]):
+        """self.contained will be a GuiElement if only one is containable, or
+        a list of GuiElements if multiple are contained."""
+        if isinstance(contained, GuiElement):
+            self.contained = contained
+            object_id = 'Container({})'.format(self.contained.object_id)
+            super().__init__(object_id)
+            self.add_ge(self.contained)
+        else:
+            self.contained = list(contained)
+            object_id = 'Container({})'.format(str([ge.object_id for ge in contained])[1:-1])
+            super().__init__(object_id)
+            for ge in contained:
+                self.add_ge(ge)

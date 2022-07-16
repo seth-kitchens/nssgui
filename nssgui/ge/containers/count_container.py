@@ -30,7 +30,7 @@ class CountContainer(ListContainer):
         pass
     
     def _push(self, window):
-        window[self.keys['Count']](str(len(self.ge)))
+        window[self.keys['Count']](str(len(self.contained)))
     
     # Keys and Events
 

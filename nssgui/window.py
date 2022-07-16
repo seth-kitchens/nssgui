@@ -130,19 +130,19 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
     # Data
 
     def save(self, data):
-        self.gem.ges_save(data)
+        self.gem.for_ges_save(data)
 
     def load(self, data):
-        self.gem.ges_load(data)
+        self.gem.for_ges_load(data)
 
     def pull(self, values):
-        self.gem.ges_pull(values)
+        self.gem.for_ges_pull(values)
 
     def push(self, window):
-        self.gem.ges_push(window)
+        self.gem.for_ges_push(window)
 
     def init_window_finalized(self, window):
-        self.gem.ges_init_window_finalized(window)
+        self.gem.for_ges_init_window_finalized(window)
 
     # Other
 

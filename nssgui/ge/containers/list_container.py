@@ -5,15 +5,12 @@ from nssgui.event_handling import WRC
 from nssgui.window import AbstractBlockingWindow
 from nssgui.gui_element import *
 
-class ListContainer(GuiElement, ABC):
+
+class ListContainer(GuiElementContainer, ABC):
     
     def __init__(self, ge:GuiElement) -> None:
         check_if_instances(ge, [GuiElement, GuiElement.iLength])
-        self.ge = ge
-        self.contained_object_id = ge.object_id
-        object_id = 'ListContainer(' + self.contained_object_id + ')'
-        super().__init__(object_id)
-        self.gem.add_ge(ge)
+        super().__init__(ge)
     
     ### GuiElement
 
@@ -54,7 +51,7 @@ class ListContainer(GuiElement, ABC):
         super().define_events()
         @self.eventmethod(self.keys['Edit'])
         def event_edit(context):
-            window_edit = ListContainer.WindowEditContained('Edit', self.ge)
+            window_edit = ListContainer.WindowEditContained('Edit', self.contained)
             rv = window_edit.open(context)
             if not rv.check_success():
                 return

@@ -29,12 +29,12 @@ class StringContainer(GuiElement.iRow, ListContainer):
     # Layout
 
     def _get_row(self):
-        if 'delim' in dir(self.ge):
+        if 'delim' in dir(self.contained):
             char_names = {
                 ';': 'semicolon',
                 ',': 'comma'
             }
-            s_delim = self.ge.delim
+            s_delim = self.contained.delim
             if s_delim in char_names:
                 s_delim = char_names[s_delim]
             else:
@@ -44,7 +44,7 @@ class StringContainer(GuiElement.iRow, ListContainer):
             tooltip = None
         row = [
             sg.Text(self.text),
-            sg.In(self.ge.to_string(), key=self.keys['In'], enable_events=True, tooltip=tooltip),
+            sg.In(self.contained.to_string(), key=self.keys['In'], enable_events=True, tooltip=tooltip),
             sg.Button('Edit', key=self.keys['Edit'])
         ]
         if self.folder_browse:
@@ -58,11 +58,11 @@ class StringContainer(GuiElement.iRow, ListContainer):
         s = values[self.keys['In']]
         if s == None:
             return
-        self.ge.load_string(s)
+        self.contained.load_string(s)
     
     def _push(self, window):
         self.push_validity(window)
-        window[self.keys['In']](self.ge.to_string())
+        window[self.keys['In']](self.contained.to_string())
     
     # Keys and Events
     
@@ -77,7 +77,7 @@ class StringContainer(GuiElement.iRow, ListContainer):
         def event_add(context):
             path = context.values[self.keys['Add']]
             if path:
-                self.ge.add_item(path)
+                self.contained.add_item(path)
             self.push(context.window)
         
         @self.eventmethod(self.keys['In'])
@@ -101,6 +101,6 @@ class StringContainer(GuiElement.iRow, ListContainer):
     def is_valid(self):
         if not self.has_validity:
             return True
-        if self.blank_invalid and not len(self.ge):
+        if self.blank_invalid and not len(self.contained):
             return False
         return True
