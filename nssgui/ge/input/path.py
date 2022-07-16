@@ -3,13 +3,13 @@ import os
 import PySimpleGUI as sg
 
 from nssgui.style import colors
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
-class Path(GuiElement):
+class Path(GuiElement.iRow, GuiElement):
 
     def __init__(self, object_id, text, blank_invalid=False, has_validity=False) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.path = ''
         self.blank_invalid = blank_invalid
@@ -25,17 +25,13 @@ class Path(GuiElement):
     def _get_row(self):
         row = [
             sg.Text(self.text),
-            sg.In(self.path, key=self.keys['Path'], enable_events=True, **self.sg_kwargs['Path']),
+            sg.In(self.path, key=self.keys['Path'], enable_events=True, **self.sg_kwargs('Path')),
             sg.FolderBrowse('Browse',
-                key=self.keys['Browse'], target=self.keys['Path'], **self.sg_kwargs['Browse'])
+                key=self.keys['Browse'], target=self.keys['Path'], **self.sg_kwargs('Browse'))
         ]
         return row
     
     # Data
-
-    def _init(self):
-        self.init_sg_kwargs('Path')
-        self.init_sg_kwargs('Browse')
 
     def _save(self, data):
         if not self.is_valid():
@@ -67,7 +63,7 @@ class Path(GuiElement):
             path = self.path
         window[self.keys['Path']](path)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
@@ -86,21 +82,25 @@ class Path(GuiElement):
     # Other
     
     def sg_kwargs_path(self, **kwargs):
-        return self.set_sg_kwargs('Path', **kwargs)
+        return self._set_sg_kwargs('Path', **kwargs)
 
     def sg_kwargs_browse(self, **kwargs):
-        return self.set_sg_kwargs('Browse', **kwargs)
+        return self._set_sg_kwargs('Browse', **kwargs)
     
     ### iValid
     
-    def _push_validity(self, window):
+    def push_validity(self, window):
+        if not self.has_validity:
+            return
         sg_path = window[self.keys['Path']]
         if self.is_valid():
             sg_path.update(background_color = colors.valid)
         else:
             sg_path.update(background_color = colors.invalid)
 
-    def _is_valid(self):
+    def is_valid(self):
+        if not self.has_validity:
+            return True
         path = self.path
         if path == None:
             return False

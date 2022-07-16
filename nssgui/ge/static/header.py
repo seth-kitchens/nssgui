@@ -1,12 +1,12 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
-class Header(GuiElement):
+class Header(GuiElement.iSge, GuiElement):
 
     def __init__(self, object_id, text) -> None:
-        super().__init__(object_id, GuiElement.layout_types.SGE)
+        super().__init__(object_id)
         self.text = text
 
     ### GuiElement
@@ -14,27 +14,10 @@ class Header(GuiElement):
     # Layout
     
     def _get_sge(self):
-        return sg.Text(self.text, key=self.keys['Text'], **self.sg_kwargs['Text'])
+        self.default_sg_kwargs('Text', text_color='gold')
+        return sg.Text(self.text, key=self.keys['Text'], **self._sg_kwargs('Text'))
     
     # Data
-
-    def _init(self):
-        self.init_sg_kwargs('Text', text_color='gold')
-
-    def _save(self, data):
-        pass
-
-    def _load(self, data):
-        pass
-
-    def _pull(self, values):
-        pass
-
-    def _push(self, window):
-        pass
-
-    def _init_window(self, window):
-        pass
 
     # Keys and Events
     
@@ -48,4 +31,4 @@ class Header(GuiElement):
     # Other
 
     def sg_kwargs_text(self, **kwargs):
-        return self.set_sg_kwargs('Text', **kwargs)
+        return self._set_sg_kwargs('Text', **kwargs)

@@ -1,12 +1,12 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
-class Dropdown(GuiElement):
+class Dropdown(GuiElement.iRow, GuiElement):
     
     def __init__(self, object_id, text, options, enable_events=True) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.options = options
         self.enable_events = enable_events
@@ -22,9 +22,6 @@ class Dropdown(GuiElement):
         return row
     
     # Data
-
-    def _init(self):
-        self.init_sg_kwargs('Dropdown')
     
     def _save(self, data):
         data[self.object_id] = self.selection
@@ -40,7 +37,7 @@ class Dropdown(GuiElement):
     def _push(self, window):
         window[self.keys['Dropdown']](self.selection)
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
@@ -55,14 +52,14 @@ class Dropdown(GuiElement):
     # Others
 
     def sg_kwargs_dropdown(self, **kwargs):
-        self.set_sg_kwargs('Dropdown', **kwargs)
+        self._set_sg_kwargs('Dropdown', **kwargs)
 
     def get_sge_dropdown(self):
         if not self.selection:
             self.selection = self.options[0]
         return sg.Combo(self.options, self.selection,
             key=self.keys['Dropdown'], enable_events=self.enable_events,
-            **self.sg_kwargs['Dropdown'])
+            **self.sg_kwargs('Dropdown'))
     
     ### Dropdown
 

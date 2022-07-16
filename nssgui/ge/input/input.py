@@ -1,10 +1,10 @@
 import PySimpleGUI as sg
 
 from nssgui.style import colors
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
-class Input(GuiElement):
+class Input(GuiElement.iRow, GuiElement):
 
     TYPE_SMALL = 'small'
     TYPE_INT = 'int'
@@ -17,7 +17,7 @@ class Input(GuiElement):
             negative_invalid=False,
             blank_invalid=False,
             has_validity=False) -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.text = text
         self.type = type
         self.negative_invalid = negative_invalid
@@ -35,20 +35,16 @@ class Input(GuiElement):
     # Layout
     
     def _get_row(self):
+        if self.type == Input.TYPE_SMALL or self.type == Input.TYPE_INT:
+            self.default_sg_kwargs('In', size=(5, 1))
         row = []
         if self.text:
             row.append(sg.Text(self.text))
         row.append(sg.In(
-            self.value, key=self.keys['In'], enable_events=True, **self.sg_kwargs['In']))
+            self.value, key=self.keys['In'], enable_events=True, **self.sg_kwargs('In')))
         return row
     
     # Data
-
-    def _init(self):
-        if self.type == Input.TYPE_SMALL or self.type == Input.TYPE_INT:
-            self.init_sg_kwargs('In', size=(5, 1))
-        else:
-            self.init_sg_kwargs('In')
 
     def _save(self, data):
         if not self.is_valid():
@@ -73,14 +69,14 @@ class Input(GuiElement):
             sg_in.update(self.value)
         self.push_validity(window)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
     
     def define_keys(self):
         super().define_keys()
-        self.add_keys(['In'])
+        self.add_key('In')
     
     def define_events(self):
         super().define_events()
@@ -92,18 +88,22 @@ class Input(GuiElement):
     # Other
 
     def sg_kwargs_in(self, **kwargs):
-        return self.set_sg_kwargs('In', **kwargs)
+        return self._set_sg_kwargs('In', **kwargs)
     
     ### iValid
     
-    def _push_validity(self, window):
+    def push_validity(self, window):
+        if not self.has_validity:
+            return
         sg_in = window[self.keys['In']]
         if self.is_valid():
             sg_in.update(background_color = colors.valid)
         else:
             sg_in.update(background_color = colors.invalid)
 
-    def _is_valid(self):
+    def is_valid(self):
+        if not self.has_validity:
+            return True
         if self.value == None:
             return False
         self.refresh_value()

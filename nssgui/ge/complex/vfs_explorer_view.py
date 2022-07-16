@@ -6,7 +6,7 @@ from nssgui.text import utils as text_utils
 from nssgui.data import units as unit
 from nssgui.fs.vfs import VFS
 from nssgui.fs.vfs_explorer import VFSExplorer
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 from nssgui.popup import popups
 from nssgui.sg import wrapped as sg_wrapped
 from nssgui.text.utils import TableList
@@ -18,11 +18,11 @@ from nssgui import sg as nss_sg
 __all__ = ['VFSExplorerView']
 
 
-class VFSExplorerView(GuiElement):
+class VFSExplorerView(GuiElement.iLayout, GuiElement):
     
     def __init__(self, object_id, vfs_explorer, read_only=False) -> None:
         self.read_only = read_only
-        super().__init__(object_id, GuiElement.layout_types.LAYOUT)
+        super().__init__(object_id)
         self.vfs_explorer:VFSExplorer = vfs_explorer
         self.vfs:VFS = vfs_explorer.vfs
         self.display_list:list[str] = []
@@ -51,8 +51,8 @@ class VFSExplorerView(GuiElement):
             sg.Text('Current'),
             sg.Sizer(5, 0),
             *self.row(nss_el.Input(self.keys['CurrentPath'], '') \
-                .set_sg_kwargs('In', readonly=True, expand_x=True) \
-                .init_data('""'))
+                ._set_sg_kwargs('In', readonly=True, expand_x=True) \
+                .load_value('""'))
         ]
         return row_current_path
     
@@ -127,18 +127,6 @@ class VFSExplorerView(GuiElement):
 
     # Data
     
-    def _init(self):
-        pass
-    
-    def _save(self, data):
-        pass
-    
-    def _load(self, data):
-        pass
-    
-    def _pull(self, values):
-        pass
-    
     def _push(self, window):
         self.update_rcm(window)
         self.vfs_explorer.refresh_current_dir()
@@ -157,7 +145,7 @@ class VFSExplorerView(GuiElement):
         if self.selection:
             window[self.keys['Listbox']].set_value(self.selected_row)
     
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.vfs_explorer.refresh_current_dir()
         self.push(window)

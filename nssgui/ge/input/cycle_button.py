@@ -1,12 +1,12 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
 __all__ = ['CycleButton']
 
 
-class CycleButton(GuiElement):
+class CycleButton(GuiElement.iRow, GuiElement):
 
     class display_modes:
         BEFORE_BUTTON_TEXT = 'before_button_text'
@@ -21,7 +21,7 @@ class CycleButton(GuiElement):
             indicator=False,
             button_text=None,
             option_display_mode='after_button_text') -> None:
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.label = label if label != None else ''
         self.button_text = button_text if button_text != None else ''
         self.option_display_mode = option_display_mode
@@ -56,23 +56,14 @@ class CycleButton(GuiElement):
 
     def get_sge_button(self):
         text = self.get_button_text()
-        sge = sg.Button(text, key=self.keys['Button'], **self.sg_kwargs['Button'])
+        sge = sg.Button(text, key=self.keys['Button'], **self.sg_kwargs('Button'))
         return sge
 
     # Data
-
-    def _init(self):
-        self.init_sg_kwargs('Button')
-    
-    def _save(self, data):
-        pass
     
     def _load(self, data):
         value = data[self.object_id]
         self.set_current_value(value)
-    
-    def _pull(self, values):
-        pass
     
     def _push(self, window):
         sge_button = window[self.keys['Button']]
@@ -81,9 +72,6 @@ class CycleButton(GuiElement):
         if pre_text:
             sge_label = window[self.keys['Label']]
             sge_label.update(pre_text)
-    
-    def _init_window(self, window):
-        pass
     
     # Keys and Events
     
@@ -102,7 +90,7 @@ class CycleButton(GuiElement):
     # Other
     
     def sg_kwargs_button(self, **kwargs):
-        self.set_sg_kwargs('Button', **kwargs)
+        self._set_sg_kwargs('Button', **kwargs)
         return self
     
     ### CycleButton

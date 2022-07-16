@@ -1,12 +1,12 @@
 import PySimpleGUI as sg
 
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
 
 __all__ = ['Radio']
 
 
-class Radio(GuiElement):
+class Radio(GuiElement.iRow, GuiElement):
 
     def __init__(self, object_id, text, options:list[str]|dict[str,str]):
         """
@@ -15,7 +15,7 @@ class Radio(GuiElement):
         """
         self.num_options = len(options)
         self.button_keys = [] # index -> key
-        super().__init__(object_id, GuiElement.layout_types.ROW)
+        super().__init__(object_id)
         self.groupid = GuiElement.make_key('RadioGroup', object_id)
         self.text = text if text != None else ''
         self.k_to_v = {}  # key   -> value
@@ -36,7 +36,7 @@ class Radio(GuiElement):
             self.v_to_k[value] = key
             i += 1
     
-    def get_button_key_prefix(self, index):
+    def get_button_key_name(self, index):
         return 'RadioButton' + str(index)
 
     def get_button_key(self, index):
@@ -57,13 +57,10 @@ class Radio(GuiElement):
             default = (key == self.selected_key)
             text = self.v_to_t[value]
             row.append(sg.Radio(text, self.groupid,
-                key=key, default=default, enable_events=True, **self.sg_kwargs['Radio']))
+                key=key, default=default, enable_events=True, **self.sg_kwargs('Radio')))
         return row
     
     # Data
-
-    def _init(self):
-        self.init_sg_kwargs('Radio')
 
     def _save(self, data):
         data[self.object_id] = self.get_selected_value()
@@ -82,7 +79,7 @@ class Radio(GuiElement):
             window[key](False)
         window[self.selected_key](True)
 
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
@@ -91,7 +88,7 @@ class Radio(GuiElement):
         super().define_keys()
         self.add_key('Radio')
         for i in range(self.num_options):
-            self.add_key(self.get_button_key_prefix(i))
+            self.add_key(self.get_button_key_name(i))
             self.button_keys.append(self.get_button_key(i))
     
     def define_events(self):
@@ -100,7 +97,7 @@ class Radio(GuiElement):
     # Other
 
     def sg_kwargs_radio(self, **kwargs):
-        return self.set_sg_kwargs('Radio', **kwargs)
+        return self._set_sg_kwargs('Radio', **kwargs)
     
     ### Radio
 

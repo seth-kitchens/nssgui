@@ -3,41 +3,21 @@ from abc import ABC, abstractmethod
 import PySimpleGUI as sg
 from nssgui.event_handling import WRC
 from nssgui.window import AbstractBlockingWindow
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 
-class ListContainer(GuiElement, ABC):
+
+class ListContainer(GuiElementContainer, ABC):
     
-    def __init__(self, ge:GuiElement, layout_type) -> None:
-        check_if_instances(ge, [GuiElement, iLength])
-        self.ge = ge
-        self.contained_object_id = ge.object_id
-        object_id = 'ListContainer(' + self.contained_object_id + ')'
-        super().__init__(object_id, layout_type)
-        self.gem.add_ge(ge)
+    def __init__(self, ge:GuiElement) -> None:
+        check_if_instances(ge, [GuiElement, GuiElement.iLength])
+        super().__init__(ge)
     
     ### GuiElement
 
     # Layout
     # Data
-
-    def _init(self):
-        pass
     
-    def _save(self, data):
-        pass
-    
-    def _load(self, data):
-        pass
-    
-    @abstractmethod
-    def _pull(self, values):
-        pass
-    
-    @abstractmethod
-    def _push(self, window):
-        pass
-    
-    def _init_window(self, window):
+    def _init_window_finalized(self, window):
         self.push(window)
     
     # Keys and Events
@@ -49,7 +29,7 @@ class ListContainer(GuiElement, ABC):
     class WindowEditContained(AbstractBlockingWindow):
         
         def __init__(self, title, contained) -> None:
-            check_if_instances(contained, [iEdittable])
+            check_if_instances(contained, [GuiElement.iEdittable])
             self.contained:GuiElement = contained
             super().__init__(title)
         
@@ -71,7 +51,7 @@ class ListContainer(GuiElement, ABC):
         super().define_events()
         @self.eventmethod(self.keys['Edit'])
         def event_edit(context):
-            window_edit = ListContainer.WindowEditContained('Edit', self.ge)
+            window_edit = ListContainer.WindowEditContained('Edit', self.contained)
             rv = window_edit.open(context)
             if not rv.check_success():
                 return

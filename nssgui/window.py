@@ -4,8 +4,7 @@ import PySimpleGUI as sg
 
 from nssgui.style import colors
 from nssgui.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
-from nssgui.ge.gui_element import *
-from nssgui.ge.output import StatusBar
+from nssgui.gui_element import *
 from nssgui import sg as nss_sg
 
 
@@ -82,7 +81,7 @@ class WindowContext:
         self.window.un_hide()
 
 
-class AbstractWindow(ABC, EventManager):
+class AbstractWindow(EventManager, GuiElementLayoutManager):
 
     COLOR_STATUS = '#FFFFFF'
     COLOR_STATUS_FADED = '#CCCCCC'
@@ -131,19 +130,19 @@ class AbstractWindow(ABC, EventManager):
     # Data
 
     def save(self, data):
-        self.gem.save_all(data)
+        self.gem.for_ges_save(data)
 
     def load(self, data):
-        self.gem.load_all(data)
+        self.gem.for_ges_load(data)
 
     def pull(self, values):
-        self.gem.pull_all(values)
+        self.gem.for_ges_pull(values)
 
     def push(self, window):
-        self.gem.push_all(window)
+        self.gem.for_ges_push(window)
 
-    def init_window(self, window):
-        self.gem.init_window_all(window)
+    def init_window_finalized(self, window):
+        self.gem.for_ges_init_window_finalized(window)
 
     # Other
 
@@ -180,7 +179,7 @@ class AbstractWindow(ABC, EventManager):
         if k in context.asyncs:
             context.asyncs[k].close(context)
     
-    def status_bar(self, ge:StatusBar):
+    def status_bar(self, ge):
         """Links a ge element to the update_status() function.
         Placing a [sg.Sizer(0, 10)] row above a status bar is suggested."""
         self.status_bar_key = ge.object_id
@@ -208,6 +207,12 @@ class AbstractWindow(ABC, EventManager):
                     context.window, replace_text,
                     text_color=replace_text_color)
             self.event_after(func, secs)
+    
+    def add_ge(self, ge):
+        self.gem.add_ge(ge)
+    
+    def get_ge(self, object_id) -> GuiElement | None:
+        return self.gem.get_ge(object_id)
 
 class AbstractBlockingWindow(AbstractWindow):
     """
@@ -242,7 +247,7 @@ class AbstractBlockingWindow(AbstractWindow):
         self.window = sg.Window(self.title, layout, finalize=True)
         context.push(self.window)
         context.focus()
-        self.init_window(self.window)
+        self.init_window_finalized(self.window)
         nss_sg.center_window(self.window)
         rv = EventLoop(self).run(context)
         rv.closed_window()
@@ -275,8 +280,8 @@ class AbstractAsyncWindow(AbstractWindow):
         self.window_kwargs = window_kwargs if window_kwargs != None else {}
         super().__init__(title=title, data=data)
 
-    def add_key(self, key_prefix):
-        self.keys[key_prefix] = key_prefix + self.window_id
+    def add_key(self, key_name):
+        self.keys[key_name] = key_name + self.window_id
     
     def open(self, context:WindowContext):
         super().open(context)
@@ -348,8 +353,8 @@ class ProgressWindow(AbstractAsyncWindow):
     
     ### ProgressWindow
 
-    def __getitem__(self, key_prefix):
-        return self.keys[key_prefix]
+    def __getitem__(self, key_name):
+        return self.keys[key_name]
     
     def update_progress(self, progress:float):
         self.window[self.keys['Progress']].UpdateBar(progress * 1000)

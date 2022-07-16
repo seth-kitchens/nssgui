@@ -1,12 +1,12 @@
 import PySimpleGUI as sg
 
 from nssgui.style import colors
-from nssgui.ge.gui_element import *
+from nssgui.gui_element import *
 from nssgui.ge.containers.list_container import ListContainer
 
 
 # Show the contained list as a string
-class StringContainer(ListContainer):
+class StringContainer(GuiElement.iRow, ListContainer):
     
     def __init__(self, 
             text,
@@ -14,8 +14,8 @@ class StringContainer(ListContainer):
             folder_browse=False,
             blank_invalid=False,
             has_validity=False) -> None:
-        check_if_instances(ge, [GuiElement, iLength, iEdittable, iStringable])
-        super().__init__(ge, GuiElement.layout_types.ROW)
+        check_if_instances(ge, [GuiElement, GuiElement.iLength, GuiElement.iEdittable, GuiElement.iStringable])
+        super().__init__(ge)
         self.text = text
         self.folder_browse = folder_browse
         self.blank_invalid = blank_invalid
@@ -29,12 +29,12 @@ class StringContainer(ListContainer):
     # Layout
 
     def _get_row(self):
-        if 'delim' in dir(self.ge):
+        if 'delim' in dir(self.contained):
             char_names = {
                 ';': 'semicolon',
                 ',': 'comma'
             }
-            s_delim = self.ge.delim
+            s_delim = self.contained.delim
             if s_delim in char_names:
                 s_delim = char_names[s_delim]
             else:
@@ -44,7 +44,7 @@ class StringContainer(ListContainer):
             tooltip = None
         row = [
             sg.Text(self.text),
-            sg.In(self.ge.to_string(), key=self.keys['In'], enable_events=True, tooltip=tooltip),
+            sg.In(self.contained.to_string(), key=self.keys['In'], enable_events=True, tooltip=tooltip),
             sg.Button('Edit', key=self.keys['Edit'])
         ]
         if self.folder_browse:
@@ -58,11 +58,11 @@ class StringContainer(ListContainer):
         s = values[self.keys['In']]
         if s == None:
             return
-        self.ge.load_string(s)
+        self.contained.load_string(s)
     
     def _push(self, window):
         self.push_validity(window)
-        window[self.keys['In']](self.ge.to_string())
+        window[self.keys['In']](self.contained.to_string())
     
     # Keys and Events
     
@@ -77,7 +77,7 @@ class StringContainer(ListContainer):
         def event_add(context):
             path = context.values[self.keys['Add']]
             if path:
-                self.ge.add_item(path)
+                self.contained.add_item(path)
             self.push(context.window)
         
         @self.eventmethod(self.keys['In'])
@@ -89,14 +89,18 @@ class StringContainer(ListContainer):
     
     ### iValid
     
-    def _push_validity(self, window):
+    def push_validity(self, window):
+        if not self.has_validity:
+            return
         sg_in = window[self.keys['In']]
         if self.is_valid():
             sg_in.update(background_color = colors.valid)
         else:
             sg_in.update(background_color = colors.invalid)
     
-    def _is_valid(self):
-        if self.blank_invalid and not len(self.ge):
+    def is_valid(self):
+        if not self.has_validity:
+            return True
+        if self.blank_invalid and not len(self.contained):
             return False
         return True
