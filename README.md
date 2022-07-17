@@ -24,7 +24,9 @@ This package is currently(July 2022) making some major revisions to:
 
 And then there will be a slow build up of demo programs to flesh out the coverage of PySimpleGUI's features, incorporating convenience functions and such as appropriate. Anything that would not fit into the base PySimpleGUI due to complexity may be implemented here. Additionally, until there exist examples comparing use cases of PySimpleGUI vs PySimpleGUI+nssgui, I can't really advertise the effectiveness of this package. For simple programs, PySimpleGUI alone would more than suffice. If one becomes familiar with nssgui, I hope for PySimpleGUI+nssgui to be useful for even simple programs.
 
-nssgui currently has a very small amount of tkinter-specific code. There is no strong dedication to tkinter as of now, but this is still up in the air. tkinter will serve as the default, whether nssgui is made compatible with qt, etc. Currently, the outlook is that if a desired feature will only be possible in tkinter, then nssgui will have to be tkinter only. (I have tried and failed to make a gray-out effect for an entire window when disabled, but this is likely the type of feature I am talking about.)
+nssgui currently has a very small amount of tkinter-specific code. There is no strong dedication to tkinter as of now, but this is still up in the air. tkinter will serve as the default, whether nssgui is made compatible with qt, etc. Currently, the outlook is that if a desired feature will only be possible in tkinter, then nssgui will have to be tkinter only. For example, I have tried and failed to make a gray-out effect for an entire window when disabling, but this would probably be the type of feature to cause a dependency.
+
+Current plans are to place nssgui under the LGPL3+ license, like PySimpleGUI.
 
 &nbsp;
 
@@ -115,7 +117,7 @@ One central design of nssgui is maintaining the layout system that PySimpleGUI u
 
 ### Event Handling
 
-nssgui provides infrastructure for event handling PySimpleGUI events, but it is optional, at least at the window level. Even if a program or window uses the standard PySimpleGUI layout->window->eventloop pattern, a GuiElement's `handle_event()` method may be used, which utilizes the event handling classes.
+nssgui provides infrastructure for handling PySimpleGUI events, but it is optional, at least at the window level. Even if a program or window uses the standard PySimpleGUI layout->window->eventloop pattern, a GuiElement's `handle_event()` method may be used, which utilizes the event handling classes.
 
 &nbsp;
 
