@@ -2,9 +2,9 @@
 
 ## Description
 
-nssgui (not-so-simple GUI). An extension of PySimpleGUI. Still a work-in-progress. Sacrifices simplicity for productivity, by extending PySimpleGUI with advanced features. nssgui does not require an overhaul of PySimpleGUI to use. They are able to coexist and maintain simplicity for simple programs. Incorporating nssgui windows and event handling, however, will turn a program into a more complex structure. nssgui's complex popups may be used as independent one-liners even, in an otherwise standard PySimpleGUI program.
+PsgUnsimplified, or PSGU, is an extension of PySimpleGUI adding some advanced features, including groundwork for OOP design. Still a work-in-progress. Sacrifices simplicity for productivity, by extending PySimpleGUI with advanced features. PSGU does not require an overhaul of PySimpleGUI to use. They are able to coexist and maintain simplicity for simple programs. Incorporating PSGU windows and event handling, however, will turn a program into a more complex structure. PSGU's complex popups may be used as independent one-liners even, in an otherwise standard PySimpleGUI program.
 
-The core features added by nssgui are:
+The core features added by PSGU are:
 - GuiElement: A base class for creating advanced, nestable elements with data flow (window<->objects<->dicts) made easy
 - Event handling
 - Data flow management
@@ -12,7 +12,7 @@ The core features added by nssgui are:
 
 &nbsp;
 
-## State of nssgui
+## State of PsgUnsimplified
 
 For now, this project is mostly just a separated piece of BackupScripter with plans to become an independent library.
 
@@ -22,11 +22,11 @@ This package is currently(July 2022) making some major revisions to:
 - Documentation
 - Old, unused functions
 
-And then there will be a slow build up of demo programs to flesh out the coverage of PySimpleGUI's features, incorporating convenience functions and such as appropriate. Anything that would not fit into the base PySimpleGUI due to complexity may be implemented here. Additionally, until there exist examples comparing use cases of PySimpleGUI vs PySimpleGUI+nssgui, I can't really advertise the effectiveness of this package. For simple programs, PySimpleGUI alone would more than suffice. If one becomes familiar with nssgui, I hope for PySimpleGUI+nssgui to be useful for even simple programs.
+And then there will be a slow build up of demo programs to flesh out the coverage of PySimpleGUI's features, incorporating convenience functions and such as appropriate. Anything that would not fit into the base PySimpleGUI due to complexity may be implemented here. Additionally, until there exist examples comparing use cases of PySimpleGUI vs PySimpleGUI+PsgUnsimplified, I can't really advertise the effectiveness of this package. For simple programs, PySimpleGUI is great on its own. If one becomes familiar with PSGU, I hope for PySimpleGUI+PsgUnsimplified to be useful as a go to for even simple programs.
 
-nssgui currently has a very small amount of tkinter-specific code. There is no strong dedication to tkinter as of now, but this is still up in the air. tkinter will serve as the default, whether nssgui is made compatible with qt, etc. Currently, the outlook is that if a desired feature will only be possible in tkinter, then nssgui will have to be tkinter only. For example, I have tried and failed to make a gray-out effect for an entire window when disabling, but this would probably be the type of feature to cause a dependency.
+PSGU currently has a very small amount of tkinter-specific code. There is no strong dedication to tkinter as of now, but this is still up in the air. tkinter will serve as the default, whether PSGU is made compatible with qt, etc. Currently, the outlook is that if a desired feature will only be possible in tkinter, then PSGU will have to be tkinter only. For example, I have tried and failed to make a gray-out effect for an entire window when disabling, but this would probably be the type of feature to cause a dependency.
 
-Current plans are to place nssgui under the LGPL3+ license, like PySimpleGUI.
+Current plans are to place PSGU under the LGPL3+ license, like PySimpleGUI.
 
 &nbsp;
 
@@ -40,17 +40,17 @@ It should not take much work to get it working on other platforms, which is a pr
 
 ## Installation
 
-nssgui is not currently in PyPi, but it may be installed from github
+PSGU is not currently in PyPi, but it may be installed from github
 
 ```
-python -m pip install git+https://github.com/seth-kitchens/nssgui
+python -m pip install git+https://github.com/seth-kitchens/PsuUnsimplified
 ```
 
 Here is a one liner to test if it's working
 
 ```
-import nssgui as nss
-nss.popups.ok(nss.WindowContext(), 'NSS is installed and working!')
+import PsgUnsimplified as sgu
+sgu.popups.ok(sgu.WindowContext(), 'NSS is installed and working!')
 ```
 
 &nbsp;
@@ -59,13 +59,15 @@ nss.popups.ok(nss.WindowContext(), 'NSS is installed and working!')
 
 ## Terms
 
-`nss`: Abbreviation and suggested import alias for nssgui
+`PSGU`: Abbreviation of PsgUnsimplified
 
-`ge`: GuiElement, nssgui's core element class
+`sgu`: Suggested import for PsgUnsimplified
 
 `sg`: Abbreviation and suggested import alias for PySimpleGUI
 
-`sge`: PySimpleGUI Element. `Input`, `Text`, `Column`, etc.
+`ge`: GuiElement, PSGU's core element class
+
+`sge`: Simple Gui Element. A PySimpleGUI element. `Input`, `Text`, `Column`, etc.
 
 `row`: This is commonly used to mean a list of sge's
 
@@ -89,7 +91,7 @@ By defining the data methods `save`, `load`, `pull` and `push` in a subclass, yo
 
 The layout can be defined as one of three kinds, an `sge`, `row` or `layout`, which are a single sg element, a list of sg elements, or a list of lists of sg elements respectively. These are retrieved through the `get_sge()`, `get_row()` and `get_layout()` methods. See: [Layouts](#layouts)
 
-A `GuiElementManager` (GEM) may be used to easily propagate calls to data methods and event handlers out to many `GuiElements` at once. The GEM's data methods are `for_ges_save()`, `for_ges_load()`, `for_ges_push()` and `for_ges_pull()`, taking the same parameters as the equivalent GE methods. The event handler takes the same form as other event handlers in nssgui, `handle_event(self, context:WindowContext)`. Both `GuiElement` and the nss window classes have their own `GuiElementManager`, with interface methods to easily use the GEM. By using nssgui windows, you will not need to use these methods yourself, but referencing the GEM will still be useful for accessing the stored GEs: `self.gem[object_id]`. More on nssgui windows: [Windows](#windows).
+A `GuiElementManager` (GEM) may be used to easily propagate calls to data methods and event handlers out to many `GuiElements` at once. The GEM's data methods are `for_ges_save()`, `for_ges_load()`, `for_ges_push()` and `for_ges_pull()`, taking the same parameters as the equivalent GE methods. The event handler takes the same form as other event handlers in PSGU, `handle_event(self, context:WindowContext)`. Both `GuiElement` and the PSGU window classes have their own `GuiElementManager`, with interface methods to easily use the GEM. By using PSGU windows, you will not need to use these methods yourself, but referencing the GEM will still be useful for accessing the stored GEs: `self.gem[object_id]`. More on PSGU windows: [Windows](#windows).
 
 `GuiElement` may be useful to achieve the following:
 
@@ -103,13 +105,13 @@ For a guide to subclassing, see: [Subclassing GuiElement](#subclassing-guielemen
 
 ### Keys
 
-PySimpleGUI uses keys (strings) to differentiate elements on the screen. nssgui uses named keys to identify keys with an object, which makes them unique to that class. So if there was a `GuiElement` for inputting a full name, "FullName", with a "First" field, and there was an instance object "customer_name" with an object id "CustomerName", then the element would be accessed as `customer_name.keys['First']`, which would resolve to "FirstCustomerName". By convention, other classes using these keys should have a public `keys` dict and an `add_key(self, key_name)` method.
+PySimpleGUI uses keys (strings) to differentiate elements on the screen. PSGU uses named keys to identify keys with an object, which makes them unique to that class. So if there was a `GuiElement` for inputting a full name, "FullName", with a "First" field, and there was an instance object "customer_name" with an object id "CustomerName", then the element would be accessed as `customer_name.keys['First']`, which would resolve to "FirstCustomerName". By convention, other classes using these keys should have a public `keys` dict and an `add_key(self, key_name)` method.
 
 &nbsp;
 
 ### Layouts
 
-One central design of nssgui is maintaining the layout system that PySimpleGUI uses, apart from breaking up the layout generation into `GuiElement` methods and nssgui windows separating layouts from the PySimpleGUI windows and from the event loop. Individual `GuiElement` instances may be completely defined in one line (optionally), within the layout definition. Any interaction with other elements will still need to be defined elsewhere of course.
+One central design of PSGU is maintaining the layout system that PySimpleGUI uses, apart from breaking up the layout generation into `GuiElement` methods and PSGU windows separating layouts from the PySimpleGUI windows and from the event loop. Individual `GuiElement` instances may be completely defined in one line (optionally), within the layout definition. Any interaction with other elements will still need to be defined elsewhere of course.
 
 `GuiElement` subclasses for the most part only need the required layout method. Classes made to be further subclassed might want to break the layout into separately overrideable methods.
 
@@ -117,7 +119,7 @@ One central design of nssgui is maintaining the layout system that PySimpleGUI u
 
 ### Event Handling
 
-nssgui provides infrastructure for handling PySimpleGUI events, but it is optional, at least at the window level. Even if a program or window uses the standard PySimpleGUI layout->window->eventloop pattern, a GuiElement's `handle_event()` method may be used, which utilizes the event handling classes.
+PSGU provides infrastructure for handling PySimpleGUI events, but it is optional, at least at the window level. Even if a program or window uses the standard PySimpleGUI layout->window->eventloop pattern, a GuiElement's `handle_event()` method may be used, which utilizes the event handling classes.
 
 &nbsp;
 
@@ -125,13 +127,13 @@ nssgui provides infrastructure for handling PySimpleGUI events, but it is option
 
 TODO
 
-For a guide to subclassing nssgui windows, see below: [Subclassing Windows](#subclassing-windows)
+For a guide to subclassing PSGU windows, see below: [Subclassing Windows](#subclassing-windows)
 
 &nbsp;
 
 ### Data Flow
 
-Most elements in a GUI program are either a type of input or output. On the backend however, there are times where both of these require data to be communicated in either direction: From the object to the window, or from the window to the object (e.g. input elements are usually initialized, and output elements may be depended on by other elements). Then, data must flow between the objects and other functions. This gives four directions of data flow that must be managed. nssgui uses four methods to accomplish this:
+Most elements in a GUI program are either a type of input or output. On the backend however, there are times where both of these require data to be communicated in either direction: From the object to the window, or from the window to the object (e.g. input elements are usually initialized, and output elements may be depended on by other elements). Then, data must flow between the objects and other functions. This gives four directions of data flow that must be managed. PSGU uses four methods to accomplish this:
 
 - `save(self, data:dict)` Object -> Dict
 - `load(self, data:dict)` Dict -> Object
@@ -182,8 +184,8 @@ GuiElements are made to be defined within a layout definition, where instantiati
 
 The order here is important, for several reasons:
 - Named keys will be referenced in most methods, and must come first
-- Nested GuiElements do not exist until the layout method is first called. These have to exist before `define_events()` is called, so `define_events()` is delayed until a layout method is called first. nssgui windows actually generate and discard a layout for this purpose.
-- `init_window_finalized()`, as the name suggests, needs the window to be finalized before it is called. nssgui windows do this in their `open()` method.
+- Nested GuiElements do not exist until the layout method is first called. These have to exist before `define_events()` is called, so `define_events()` is delayed until a layout method is called first. PSGU windows actually generate and discard a layout for this purpose.
+- `init_window_finalized()`, as the name suggests, needs the window to be finalized before it is called. PSGU windows do this in their `open()` method.
 
 &nbsp;
 
