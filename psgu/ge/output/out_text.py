@@ -28,10 +28,10 @@ class OutText(GuiElement.iRow, GuiElement):
     def _load(self, data):
         self.value = data[self.object_id]
 
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         window[self.keys['Out']](self.value)
 
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
 
     # Keys and Events

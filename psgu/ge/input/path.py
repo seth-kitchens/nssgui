@@ -4,6 +4,7 @@ import PySimpleGUI as sg
 
 from psgu.style import colors
 from psgu.gui_element import *
+from psgu.event_handling import EventContext
 
 
 class Path(GuiElement.iRow, GuiElement):
@@ -55,7 +56,7 @@ class Path(GuiElement.iRow, GuiElement):
             path = ''
         self.path = path
 
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         self.push_validity(window)
         if not self.is_valid():
             path = ''
@@ -63,7 +64,7 @@ class Path(GuiElement.iRow, GuiElement):
             path = self.path
         window[self.keys['Path']](path)
 
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events
@@ -76,7 +77,7 @@ class Path(GuiElement.iRow, GuiElement):
     def define_events(self):
         super().define_events()
         @self.eventmethod(self.keys['Path'])
-        def event_path(context):
+        def event_path(event_context:EventContext):
             self.push_validity('Path')
 
     # Other
@@ -89,7 +90,7 @@ class Path(GuiElement.iRow, GuiElement):
     
     ### iValid
     
-    def push_validity(self, window):
+    def push_validity(self, window:sg.Window):
         if not self.has_validity:
             return
         sg_path = window[self.keys['Path']]

@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 
 from psgu.gui_element import *
+from psgu.event_handling import EventContext
 
 
 __all__ = ['CycleButton']
@@ -65,7 +66,7 @@ class CycleButton(GuiElement.iRow, GuiElement):
         value = data[self.object_id]
         self.set_current_value(value)
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         sge_button = window[self.keys['Button']]
         sge_button.update(self.get_button_text())
         pre_text = self.get_pre_text()
@@ -83,9 +84,9 @@ class CycleButton(GuiElement.iRow, GuiElement):
     def define_events(self):
         super().define_events()
         @self.eventmethod(self.keys['Button'])
-        def event_button(context):
+        def event_button(event_context:EventContext):
             self.cycle()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
 
     # Other
     

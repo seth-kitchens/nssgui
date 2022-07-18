@@ -120,7 +120,7 @@ class GuiElementManager(GuiElementLayoutManager):
         for ge in self.ges.values():
             ge.load(data)
 
-    def for_ges_init_window_finalized(self, window):
+    def for_ges_init_window_finalized(self, window:sg.Window):
         for ge in self.ges.values():
             ge.init_window_finalized(window)
 
@@ -128,13 +128,13 @@ class GuiElementManager(GuiElementLayoutManager):
         for ge in self.ges.values():
             ge.pull(values)
 
-    def for_ges_push(self, window):
+    def for_ges_push(self, window:sg.Window):
         for ge in self.ges.values():
             ge.push(window)
 
-    def handle_event(self, context):
+    def handle_event(self, event_context):
         for ge in self.ges.values():
-            rv = WRC(ge.handle_event(context))
+            rv = WRC(ge.handle_event(event_context))
             if rv.check_close():
                 return rv
         return WRC.none()
@@ -291,28 +291,28 @@ class GuiElement(EventManager, GuiElementLayoutManager):
 
     # Init
     
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         pass
 
     # Data
     
-    def _save(self, data):
+    def _save(self, data:dict):
         pass
     
-    def _load(self, data):
+    def _load(self, data:dict):
         pass
     
-    def _pull(self, values):
+    def _pull(self, values:dict):
         pass
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         pass
 
     ##
 
     # Init
 
-    def init_window_finalized(self, window):
+    def init_window_finalized(self, window:sg.Window):
         """
         Do not override this! Most likely, the inner function `_init_window_finalized())`
         is what you want to override.
@@ -350,7 +350,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
             self._load(data)
         return self
 
-    def pull(self, values):
+    def pull(self, values:dict):
         """
         Do not override this! Most likely, the inner function `_pull()`
         is what you want to override.
@@ -360,7 +360,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         self._pull(values)
         return self
 
-    def push(self, window):
+    def push(self, window:sg.Window):
         """
         Do not override this! Most likely, the inner function `_push()`
         is what you want to override.
@@ -404,11 +404,11 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     
     #
 
-    def handle_event(self, context):
-        rv = WRC(EventManager.handle_event(self, context))
+    def handle_event(self, event_context):
+        rv = WRC(EventManager.handle_event(self, event_context))
         if rv.check_close():
             return rv
-        rv |= WRC(self.gem.handle_event(context))
+        rv |= WRC(self.gem.handle_event(event_context))
         return rv
     
     # Validity
@@ -420,7 +420,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         """
         return True
 
-    def push_validity(self, window):
+    def push_validity(self, window:sg.Window):
         """
         For Overriding: function should probably start with a has_validity check:
         `if not self.has_validity: return`

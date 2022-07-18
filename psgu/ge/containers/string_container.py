@@ -3,6 +3,7 @@ import PySimpleGUI as sg
 from psgu.style import colors
 from psgu.gui_element import *
 from psgu.ge.containers.list_container import ListContainer
+from psgu.event_handling import EventContext
 
 
 # Show the contained list as a string
@@ -60,7 +61,7 @@ class StringContainer(GuiElement.iRow, ListContainer):
             return
         self.contained.load_string(s)
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         self.push_validity(window)
         window[self.keys['In']](self.contained.to_string())
     
@@ -74,22 +75,22 @@ class StringContainer(GuiElement.iRow, ListContainer):
     def define_events(self):
         super().define_events()
         @self.eventmethod(self.keys['Add'])
-        def event_add(context):
-            path = context.values[self.keys['Add']]
+        def event_add(event_context:EventContext):
+            path = event_context.values[self.keys['Add']]
             if path:
                 self.contained.add_item(path)
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['In'])
-        def event_in(context):
-            self.pull(context.values)
-            self.push_validity(context.window)
+        def event_in(event_context:EventContext):
+            self.pull(event_context.values)
+            self.push_validity(event_context.window_context.window)
 
     # Other
     
     ### iValid
     
-    def push_validity(self, window):
+    def push_validity(self, window:sg.Window):
         if not self.has_validity:
             return
         sg_in = window[self.keys['In']]

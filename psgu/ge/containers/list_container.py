@@ -4,6 +4,7 @@ import PySimpleGUI as sg
 from psgu.event_handling import WRC
 from psgu.window import AbstractBlockingWindow
 from psgu.gui_element import *
+from psgu.event_handling import EventContext
 
 
 class ListContainer(GuiElementContainer, ABC):
@@ -17,7 +18,7 @@ class ListContainer(GuiElementContainer, ABC):
     # Layout
     # Data
     
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events
@@ -50,10 +51,10 @@ class ListContainer(GuiElementContainer, ABC):
     def define_events(self):
         super().define_events()
         @self.eventmethod(self.keys['Edit'])
-        def event_edit(context):
+        def event_edit(event_context:EventContext):
             window_edit = ListContainer.WindowEditContained('Edit', self.contained)
-            rv = window_edit.open(context)
+            rv = window_edit.open(event_context.window_context)
             if not rv.check_success():
                 return
             self.load(window_edit.get_data())
-            self.push(context.window)
+            self.push(event_context.window_context.window)

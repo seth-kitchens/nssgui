@@ -2,7 +2,7 @@
 
 ## Description
 
-PsgUnsimplified, or psgu, is an extension of PySimpleGUI adding some advanced features, including groundwork for OOP design. Still a work-in-progress. Sacrifices simplicity for productivity, by extending PySimpleGUI with advanced features. psgu does not require an overhaul of PySimpleGUI to use. They are able to coexist and maintain simplicity for simple programs. Incorporating psgu windows and event handling, however, will turn a program into a more complex structure. psgu's complex popups may be used as independent one-liners even, in an otherwise standard PySimpleGUI program.
+PsgUnsimplified, or psgu, is an extension of PySimpleGUI adding some advanced features, including groundwork for OOP design. Still a work-in-progress. Sacrifices simplicity for productivity, by extending PySimpleGUI with advanced features. Psgu does not require an overhaul of PySimpleGUI to use. They are able to coexist and maintain simplicity for simple programs. Incorporating psgu windows and event handling, however, will turn a program into a more complex structure. Psgu's complex popups may be used as independent one-liners even, in an otherwise standard PySimpleGUI program.
 
 The core features added by psgu are:
 - GuiElement: A base class for creating advanced, nestable elements with data flow (window<->objects<->dicts) made easy
@@ -22,9 +22,7 @@ This package is currently(July 2022) making some major revisions to:
 - Documentation
 - Old, unused functions
 
-And then there will be a slow build up of demo programs to flesh out the coverage of PySimpleGUI's features, incorporating convenience functions and such as appropriate. Anything that would not fit into the base PySimpleGUI due to complexity may be implemented here. Additionally, until there exist examples comparing use cases of PySimpleGUI vs PySimpleGUI+PsgUnsimplified, I can't really advertise the effectiveness of this package. For simple programs, PySimpleGUI is great on its own. If one becomes familiar with psgu, I hope for PySimpleGUI+PsgUnsimplified to be useful as a go to for even simple programs.
-
-psgu currently has a very small amount of tkinter-specific code. There is no strong dedication to tkinter as of now, but this is still up in the air. tkinter will serve as the default, whether psgu is made compatible with qt, etc. Currently, the outlook is that if a desired feature will only be possible in tkinter, then psgu will have to be tkinter only. For example, I have tried and failed to make a gray-out effect for an entire window when disabling, but this would probably be the type of feature to cause a dependency.
+And then there will be a slow build up of demo programs to flesh out the coverage of PySimpleGUI's features, incorporating convenience functions and such as appropriate. Anything that would not fit into the base PySimpleGUI due to complexity may be implemented here. Additionally, until there exist examples comparing use cases of PySimpleGUI vs PySimpleGUI+psgu, I can't really advertise the effectiveness of this package. For simple programs, PySimpleGUI is great on its own. If one becomes familiar with psgu, I hope for PySimpleGUI+psgu to be useful as a go to for even simple programs.
 
 Current plans are to place psgu under the LGPL3+ license, like PySimpleGUI.
 
@@ -43,7 +41,7 @@ It should not take much work to get it working on other platforms, which is a pr
 psgu is not currently in PyPi, but it may be installed from github
 
 ```
-python -m pip install git+https://github.com/seth-kitchens/PsuUnsimplified
+python -m pip install git+https://github.com/seth-kitchens/psg-unsimplified
 ```
 
 Here is a one liner to test if it's working
@@ -59,9 +57,7 @@ psgu.popups.ok(psgu.WindowContext(), 'NSS is installed and working!')
 
 ## Terms
 
-`psgu`: Abbreviation of PsgUnsimplified
-
-`psgu`: Suggested import for PsgUnsimplified
+`psgu`: Abbreviation and package name for PsgUnsimplified
 
 `sg`: Abbreviation and suggested import alias for PySimpleGUI
 
@@ -91,7 +87,7 @@ By defining the data methods `save`, `load`, `pull` and `push` in a subclass, yo
 
 The layout can be defined as one of three kinds, an `sge`, `row` or `layout`, which are a single sg element, a list of sg elements, or a list of lists of sg elements respectively. These are retrieved through the `get_sge()`, `get_row()` and `get_layout()` methods. See: [Layouts](#layouts)
 
-A `GuiElementManager` (GEM) may be used to easily propagate calls to data methods and event handlers out to many `GuiElements` at once. The GEM's data methods are `for_ges_save()`, `for_ges_load()`, `for_ges_push()` and `for_ges_pull()`, taking the same parameters as the equivalent GE methods. The event handler takes the same form as other event handlers in psgu, `handle_event(self, context:WindowContext)`. Both `GuiElement` and the psgu window classes have their own `GuiElementManager`, with interface methods to easily use the GEM. By using psgu windows, you will not need to use these methods yourself, but referencing the GEM will still be useful for accessing the stored GEs: `self.gem[object_id]`. More on psgu windows: [Windows](#windows).
+A `GuiElementManager` (GEM) may be used to easily propagate calls to data methods and event handlers out to many `GuiElements` at once. The GEM's data methods are `for_ges_save()`, `for_ges_load()`, `for_ges_push()` and `for_ges_pull()`, taking the same parameters as the equivalent GE methods. The event handler takes the same form as other event handlers in psgu, `handle_event(self, event_context:EventContext)`. Both `GuiElement` and the psgu window classes have their own `GuiElementManager`, with interface methods to easily use the GEM. By using psgu windows, you will not need to use these methods yourself, but referencing the GEM will still be useful for accessing the stored GEs: `self.gem[object_id]`. More on psgu windows: [Windows](#windows).
 
 `GuiElement` may be useful to achieve the following:
 

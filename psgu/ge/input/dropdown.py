@@ -34,10 +34,10 @@ class Dropdown(GuiElement.iRow, GuiElement):
         if selection in self.options:
             self.selection = selection
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         window[self.keys['Dropdown']](self.selection)
     
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events

@@ -13,6 +13,7 @@ from psgu.text.utils import TableList
 from psgu import g as psgu_g
 from psgu import ge as psgu_el
 from psgu import sg as psgu_sg
+from psgu.event_handling import EventContext
 
 
 __all__ = ['VFSExplorerView']
@@ -127,7 +128,7 @@ class VFSExplorerView(GuiElement.iLayout, GuiElement):
 
     # Data
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         self.update_rcm(window)
         self.vfs_explorer.refresh_current_dir()
         if self.selection:
@@ -145,7 +146,7 @@ class VFSExplorerView(GuiElement.iLayout, GuiElement):
         if self.selection:
             window[self.keys['Listbox']].set_value(self.selected_row)
     
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.vfs_explorer.refresh_current_dir()
         self.push(window)
@@ -200,50 +201,51 @@ class VFSExplorerView(GuiElement.iLayout, GuiElement):
         super().define_events()
         
         @self.eventmethod(self.keys['Listbox'])
-        def event_listbox(context):
-            sge_listbox = context.window[self.keys['Listbox']]
+        def event_listbox(event_context:EventContext):
+            window = event_context.window_context.window
+            sge_listbox = window[self.keys['Listbox']]
             is_double_click = False
             if not sge_listbox.is_right_click():
                 if self.check_double_click('Listbox'):
                     is_double_click = True
-            item_list = context.values[self.keys['Listbox']]
+            item_list = event_context.values[self.keys['Listbox']]
             if len(item_list) <= 0:
                 return
             if item_list[0][1] == '#':
                 self.deselect()
-                self.push(context.window)
+                self.push(event_context.window_context.window)
                 return
             listbox_row = item_list[0]
             same_clicked = (listbox_row == self.selected_row)
             if same_clicked and is_double_click:
-                context.event = self.key_rcm('ListboxFolder', 'Open')
-                return self.handle_event(context)
+                event_context.event = self.key_rcm('ListboxFolder', 'Open')
+                return self.handle_event(event_context)
             else:
                 self.select(listbox_row)
-                self.push(context.window)
+                self.push(event_context.window_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxFolder', 'Open'))
-        def event_open_folder(context):
+        def event_open_folder(event_context:EventContext):
             if not self.selection:
                 return
             entry = self.selection
             path = entry.get_path()
             self.vfs_explorer.open_folder(path)
             self.deselect()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxFolder', 'Back'))
         @self.eventmethod(self.key_rcm('ListboxFile', 'Back'))
         @self.eventmethod(self.keys['ExitFolder'])
-        def events_exit_folder(context):
+        def events_exit_folder(event_context:EventContext):
             self.vfs_explorer.exit_folder()
             self.deselect()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
 
         @self.eventmethod(self.key_rcm('ListboxFolder', 'Remove'))
         @self.eventmethod(self.key_rcm('ListboxFile', 'Remove'))
         @self.eventmethod(self.keys['Remove'])
-        def event_remove(context):
+        def event_remove(event_context:EventContext):
             if not self.selection:
                 return
             path = self.selection.get_path()
@@ -251,45 +253,45 @@ class VFSExplorerView(GuiElement.iLayout, GuiElement):
             self.vfs.calc_all()
             self.vfs_explorer.refresh_current_dir()
             self.deselect()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxNone', 'AddFolder'))
         @self.eventmethod(self.keys['AddFolder'])
-        def event_add_folder(context):
-            item_path = psgu_sg.browse_folder(context.window)
+        def event_add_folder(event_context:EventContext):
+            item_path = psgu_sg.browse_folder(event_context.window_context.window)
             if item_path == '':
                 return
             self.vfs.add_path(item_path)
             self.vfs.calc_root(item_path)
             self.vfs_explorer.exit_to_root()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxNone', 'AddFiles'))
         @self.eventmethod(self.keys['AddFiles'])
-        def event_add_files(context):
-            item_paths = psgu_sg.browse_files(context.window)
+        def event_add_files(event_context:EventContext):
+            item_paths = psgu_sg.browse_files(event_context.window_context.window)
             if len(item_paths) <= 0:
                 return
             for item_path in item_paths:
                 self.vfs.add_path(item_path)
             self.vfs.calc_roots(item_paths)
             self.vfs_explorer.exit_to_root()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['ExitToRoot'])
-        def events_exit_to_root(context):
+        def events_exit_to_root(event_context:EventContext):
             self.vfs_explorer.exit_to_root()
             self.deselect()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['RemoveAll'])
-        def event_remove_all(context):
-            if not popups.confirm(context, 'Remove All?'):
+        def event_remove_all(event_context:EventContext):
+            if not popups.confirm(event_context.window_context, 'Remove All?'):
                 return
             self.vfs.remove_all()
             self.vfs_explorer.refresh_current_dir()
             self.deselect()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
 
     ### VFSExplorerView
 

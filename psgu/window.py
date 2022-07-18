@@ -6,79 +6,15 @@ from psgu.style import colors
 from psgu.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
 from psgu.gui_element import *
 from psgu import sg as psgu_sg
-
+from psgu.window_context import WindowContext
 
 __all__ = [
-    'WindowContext',
     'AbstractWindow',
     'AbstractBlockingWindow',
     'AbstractAsyncWindow',
     'ProgressWindow',
     'LoadingWindow'
 ]
-
-
-class WindowContext:
-
-    def __init__(self, window=None, event=NULL_EVENT, values=None, data=None):
-        self.window:sg.Window = window
-        self.event:str = event
-        self.values:dict = values if values != None else {}
-        self.data:dict = data if data != None else {}
-        self.window_stack:list[sg.Window] = []
-        self.async_windows:dict[str,AbstractAsyncWindow] = {}
-        self.asyncs = self.async_windows
-
-    def push(self, window:sg.Window):
-        self.window_stack.append(self.window)
-        self.window = window
-        psgu_sg.center_window(window)
-
-    def pop(self):
-        w = self.window
-        self.window = self.window_stack.pop()
-        self.event = NULL_EVENT
-        self.values = {}
-        return w
-    
-    def add_async(self, asyncwindow):
-        self.async_windows[asyncwindow.window_id] = asyncwindow
-        if asyncwindow.window != None:
-            psgu_sg.center_window(asyncwindow.window)
-    
-    def remove_async(self, window_id):
-        del self.async_windows[window_id]
-
-    def focus(self):
-        if self.window == None:
-            return
-        self.window.bring_to_front()
-        self.window.force_focus()
-        for w in self.async_windows.values():
-            w.window.bring_to_front()
-            w.window.force_focus()
-
-    def disable(self):
-        if self.window == None:
-            return
-        self.window.disable()
-        self.window.set_alpha(0.9)
-
-    def enable(self):
-        if self.window == None:
-            return
-        self.window.enable()
-        self.window.set_alpha(1.0)
-
-    def hide(self):
-        if self.window == None:
-            return
-        self.window.hide()
-    
-    def unhide(self):
-        if self.window == None:
-            return
-        self.window.un_hide()
 
 
 class AbstractWindow(EventManager, GuiElementLayoutManager):
@@ -141,14 +77,14 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
     def push(self, window):
         self.gem.for_ges_push(window)
 
-    def init_window_finalized(self, window):
+    def init_window_finalized(self, window:sg.Window):
         self.gem.for_ges_init_window_finalized(window)
 
     # Other
 
     @abstractmethod
-    def open(self, context=None):
-        self._close_loading_window(context)
+    def open(self, window_context=None):
+        self._close_loading_window(window_context)
 
     def get_data(self):
         return self.data
@@ -166,18 +102,18 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
         return menu.get_event_key()
     
     @classmethod
-    def open_loading_window(cls, context, title=''):
+    def open_loading_window(cls, window_context, title=''):
         """Open an async loading window that will automatically\n
         be closed when a Window of the caller's class is opened."""
         k = 'LoadingWindow' + cls.__name__
-        LoadingWindow(k, title=title).open(context)
+        LoadingWindow(k, title=title).open(window_context)
 
     @classmethod
-    def _close_loading_window(cls, context):
+    def _close_loading_window(cls, window_context):
         """Check for and close any loading windows opened for the class"""
         k = 'LoadingWindow' + cls.__name__
-        if k in context.asyncs:
-            context.asyncs[k].close(context)
+        if k in window_context.asyncs:
+            window_context.asyncs[k].close(window_context)
     
     def status_bar(self, ge):
         """Links a ge element to the update_status() function.
@@ -202,9 +138,9 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
             status_bar.update_status(self.window, text, text_color=text_color)
         self.window.refresh()
         if secs != None:
-            def func(context):
+            def func(event_context):
                 status_bar.update_status(
-                    context.window, replace_text,
+                    event_context.window_context.window, replace_text,
                     text_color=replace_text_color)
             self.event_after(func, secs)
     
@@ -234,36 +170,37 @@ class AbstractBlockingWindow(AbstractWindow):
         super().__init__(title=title, data=data)
         self.focus_type = focus_type
     
-    def open(self, context=None):
+    def open(self, window_context:WindowContext=None):
         """Open a blocking window. Returns after closing."""
-        context = context if context != None else WindowContext()
+        window_context = window_context if window_context != None else WindowContext()
         layout = self.get_layout()
         if self.focus_type == self.focus_types.HIDE_PREV:
-            context.hide()
+            window_context.hide()
         elif self.focus_type == self.focus_types.DISABLE_PREV:
-            context.disable()
+            window_context.disable()
         self.load(self.data)
-        super().open(context)
+        super().open(window_context)
         self.window = sg.Window(self.title, layout, finalize=True)
-        context.push(self.window)
-        context.focus()
+        window_context.push(self.window)
+        window_context.focus()
         self.init_window_finalized(self.window)
         psgu_sg.center_window(self.window)
-        rv = EventLoop(self).run(context)
+        event_loop = EventLoop(self)
+        rv = event_loop.run(window_context)
         rv.closed_window()
 
         # save if successful
         if rv.check_success():
-            if context.values:
-                self.pull(context.values)
+            if event_loop.final_event_context is not None:
+                self.pull(event_loop.final_event_context)
             self.save(self.data)
-        context.pop()
+        window_context.pop()
 
         if self.focus_type == self.focus_types.HIDE_PREV:
-            context.unhide()
+            window_context.unhide()
         elif self.focus_type == self.focus_types.DISABLE_PREV:
-            context.enable()
-        context.focus()
+            window_context.enable()
+        window_context.focus()
         return rv
 
 class AbstractAsyncWindow(AbstractWindow):
@@ -283,8 +220,8 @@ class AbstractAsyncWindow(AbstractWindow):
     def add_key(self, key_name):
         self.keys[key_name] = key_name + self.window_id
     
-    def open(self, context:WindowContext):
-        super().open(context)
+    def open(self, window_context:WindowContext):
+        super().open(window_context)
         if self.window:
             return
         layout = self.get_layout()
@@ -293,15 +230,15 @@ class AbstractAsyncWindow(AbstractWindow):
         kwargs['layout'] = layout
         kwargs['finalize'] = True
         self.window = sg.Window(**kwargs)
-        context.add_async(self)
+        window_context.add_async(self)
         self.window.refresh()
     
-    def close(self, context:WindowContext):
+    def close(self, window_context:WindowContext):
         if not self.window:
             return
         self.window.close()
         self.window = None
-        context.remove_async(self.window_id)
+        window_context.remove_async(self.window_id)
     
     def update(self):
         event, values = self.window.read(10)

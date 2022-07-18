@@ -32,12 +32,12 @@ class Checkbox(GuiElement.iSge, GuiElement):
     def _pull(self, values):
         self.value = values[self.keys['Checkbox']]
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         sge_checkbox = window[self.keys['Checkbox']]
         sge_checkbox.update(self.value)
         sge_checkbox.update(disabled=self.disabled)
     
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events

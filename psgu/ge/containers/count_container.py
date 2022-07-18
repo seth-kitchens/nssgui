@@ -29,7 +29,7 @@ class CountContainer(ListContainer):
     def _pull(self, values):
         pass
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         window[self.keys['Count']](str(len(self.contained)))
     
     # Keys and Events

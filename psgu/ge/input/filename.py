@@ -37,11 +37,11 @@ class Filename(GuiElement.iRow, GuiElement):
         self.name = values[self.keys['Name']]
         self.extension = values[self.keys['Extension']]
 
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         window[self.keys['Name']](self.name)
         window[self.keys['Extension']](self.extension)
 
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events

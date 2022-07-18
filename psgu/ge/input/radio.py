@@ -74,12 +74,12 @@ class Radio(GuiElement.iRow, GuiElement):
             if values[key]:
                 self.set_selected_key(key)
 
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         for key in self.button_keys:
             window[key](False)
         window[self.selected_key](True)
 
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events

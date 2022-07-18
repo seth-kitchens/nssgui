@@ -8,6 +8,9 @@ import PySimpleGUI as sg
 from psgu import sg as psgu_sg
 from psgu.gui_element import *
 from psgu.popup import *
+from psgu.event_handling import EventContext
+
+
 
 __all__ = [
     'InfoButton',
@@ -53,8 +56,8 @@ class InfoButton(GuiElement.iSge, GuiElement):
     def define_events(self):
         super().define_events()
         @self.eventmethod(self.keys['Info'])
-        def event_info(context):
-            self.info_popup(context)
+        def event_info(event_context:EventContext):
+            self.info_popup(event_context.window_context)
 
     # Other
 
@@ -63,9 +66,9 @@ class InfoButton(GuiElement.iSge, GuiElement):
 
     ### InfoButton
 
-    def info_popup(self, context):
+    def info_popup(self, window_context):
         pb = self.info_def.prepare_popup_builder()
-        pb.title(self.title).header(self.header).subheader(self.subheader).ok().open(context)
+        pb.title(self.title).header(self.header).subheader(self.subheader).ok().open(window_context)
 
 
 button_size = psgu_sg.button_size

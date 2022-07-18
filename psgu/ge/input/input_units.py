@@ -5,6 +5,7 @@ from psgu.style import colors
 from psgu.gui_element import *
 from psgu import g as psgu_g
 from psgu import ge as psgu_el
+from psgu.event_handling import EventContext
 
 
 class InputUnits(GuiElement.iRow, GuiElement):
@@ -70,7 +71,7 @@ class InputUnits(GuiElement.iRow, GuiElement):
         degree_name = self.unit_value.unit_scale.get_name_by_symbol(degree_symbol)
         self.set_value(value, degree_name)
 
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         sg_in = window[self.keys['In']]
         sg_dropdown = window[self.ges('Unit').keys['Dropdown']]
         sg_in.update(disabled=self.disabled)
@@ -82,7 +83,7 @@ class InputUnits(GuiElement.iRow, GuiElement):
         self.push_validity(window)
         self.ges('Unit').update(window, self.unit_value.get_degree_symbol())
 
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events
@@ -96,22 +97,22 @@ class InputUnits(GuiElement.iRow, GuiElement):
         super().define_events()
 
         @self.eventmethod(self.ges('Unit').keys['Dropdown'])
-        def event_dropdown(context):
+        def event_dropdown(event_context:EventContext):
             if not self.auto_scale_units:
                 return
-            self.pull(context.values)
-            degree_symbol = context.values[self.ges('Unit').keys['Dropdown']]
+            self.pull(event_context.values)
+            degree_symbol = event_context.values[self.ges('Unit').keys['Dropdown']]
             degree_name = self.units.unit_scale.get_name_by_symbol(degree_symbol)
             if self.is_valid():
                 self.unit_value.convert_to_degree(degree_name)
             else:
                 self.reset(degree_name)
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['In'])
-        def event_in(context):
-            self.pull(context.values)
-            self.push_validity(context.window)
+        def event_in(event_context:EventContext):
+            self.pull(event_context.values)
+            self.push_validity(event_context.window_context.window)
 
     # Other
 
@@ -123,7 +124,7 @@ class InputUnits(GuiElement.iRow, GuiElement):
     
     ### iValid
     
-    def push_validity(self, window):
+    def push_validity(self, window:sg.Window):
         if not self.has_validity:
             return
         sg_in = window[self.keys['In']]

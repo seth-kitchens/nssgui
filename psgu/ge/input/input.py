@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 
 from psgu.style import colors
 from psgu.gui_element import *
+from psgu.event_handling import EventContext
 
 
 class Input(GuiElement.iRow, GuiElement):
@@ -60,7 +61,7 @@ class Input(GuiElement.iRow, GuiElement):
         self.value = values[self.keys['In']]
         self.refresh_value()
 
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         sg_in = window[self.keys['In']]
         sg_in.update(disabled=self.disabled)
         if not self.is_valid():
@@ -69,7 +70,7 @@ class Input(GuiElement.iRow, GuiElement):
             sg_in.update(self.value)
         self.push_validity(window)
 
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
     
     # Keys and Events
@@ -81,9 +82,9 @@ class Input(GuiElement.iRow, GuiElement):
     def define_events(self):
         super().define_events()
         @self.eventmethod(self.keys['In'])
-        def event_in(context):
-            self.pull(context.values)
-            self.push_validity(context.window)
+        def event_in(event_context:EventContext):
+            self.pull(event_context.values)
+            self.push_validity(event_context.window_context.window)
     
     # Other
 
@@ -92,7 +93,7 @@ class Input(GuiElement.iRow, GuiElement):
     
     ### iValid
     
-    def push_validity(self, window):
+    def push_validity(self, window:sg.Window):
         if not self.has_validity:
             return
         sg_in = window[self.keys['In']]

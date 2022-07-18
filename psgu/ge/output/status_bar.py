@@ -32,10 +32,10 @@ class StatusBar(GuiElement.iRow, GuiElement):
     def _load(self, data):
         self.text = data[self.object_id]
 
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         window[self.keys['Status']](self.text, text_color=self.text_color)
 
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         self.push(window)
 
     # Keys and Events

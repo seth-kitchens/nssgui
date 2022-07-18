@@ -6,6 +6,7 @@ import PySimpleGUI as sg
 from psgu.gui_element import *
 from psgu.popup import popups
 from psgu.sg import wrapped as sg_wrapped
+from psgu.event_handling import EventContext
 
 
 __all__ = ['TextList']
@@ -102,7 +103,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
     def _pull(self, values):
         pass
     
-    def _push(self, window):
+    def _push(self, window:sg.Window):
         sge_listbox:sg_wrapped.Listbox = window[self.keys['Listbox']]
         sge_listbox.update(self.get_display_list())
         if self.selected_index != None:
@@ -112,7 +113,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             sge_listbox.update(set_to_index=[])
             sge_listbox.set_right_click_menu(self.right_click_menus['ListboxNone'].get_def())
     
-    def _init_window_finalized(self, window):
+    def _init_window_finalized(self, window:sg.Window):
         window[self.keys['Listbox']].Widget.config(activestyle='none')
         self.push(window)
     
@@ -146,42 +147,43 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
         super().define_events()
         
         @self.eventmethod(self.keys['Listbox'])
-        def event_listbox(context):
-            sge_listbox = context.window[self.keys['Listbox']]
+        def event_listbox(event_context:EventContext):
+            window = event_context.window_context.window
+            sge_listbox = window[self.keys['Listbox']]
             is_double_click = False
             if not sge_listbox.is_right_click():
                 if self.check_double_click('Listbox'):
                     is_double_click = True
             if not self.items:
                 self.deselect()
-                self.push(context.window)
+                self.push(event_context.window_context.window)
                 return
             if is_double_click:
-                context.event = self.key_rcm('ListboxItem', 'Edit')
-                return self.handle_event(context)
-            selections = context.window[self.keys['Listbox']].get_indexes()
+                event_context.event = self.key_rcm('ListboxItem', 'Edit')
+                return self.handle_event(event_context)
+            selections = window[self.keys['Listbox']].get_indexes()
             if len(selections):
                 self.selected_index = selections[0]
-            self.push(context.window)
+            self.push(event_context.window_context.window)
     
         @self.eventmethod(self.key_rcm('ListboxItem', 'Edit'))
         @self.eventmethod(self.keys['Edit'])
-        def event_edit(context):
+        def event_edit(event_context:EventContext):
             if self.selected_index == None:
                 return
             item = self.get_selected_item()
-            new_item = popups.edit_string(context, item, title='Edit')
+            new_item = popups.edit_string(event_context.window_context, item, title='Edit')
             if new_item == item:
                 return
             if new_item in self.items:
-                rv = popups.choose(context,
+                rv = popups.choose(event_context.window_context,
                     text='"{}" already exists. Remove "{}" ?'.format(new_item, item),
                     options=['Remove', 'Cancel'])
                 if rv != 'Remove':
                     return
                 self.items.remove(item)
                 self.selected_index = None
-                self.push(context.window)
+                self.push(event_context.window_context.window)
                 return
             new_item = self.format_item(new_item)
             if new_item == '':
@@ -192,33 +194,33 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             else:
                 self.items[self.selected_index] = new_item
                 self.select_item(new_item)
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Remove'))
         @self.eventmethod(self.keys['Remove'])
-        def event_remove(context):
+        def event_remove(event_context:EventContext):
             if self.selected_index == None:
                 return
             self.items.pop(self.selected_index)
             self.deselect()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['RemoveAll'])
-        def event_remove_all(context):
+        def event_remove_all(event_context:EventContext):
             if not len(self):
                 return
-            if not popups.warning(context, 'Remove all entries?'):
+            if not popups.warning(event_context.window_context, 'Remove all entries?'):
                 return
             self.items.clear()
             self.deselect()
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Clone'))
         @self.eventmethod(self.keys['Clone'])
-        def event_clone(context):
+        def event_clone(event_context:EventContext):
             if self.selected_index == None:
                 return
-            item = popups.edit_string(context, self.get_selected_item(), title='Clone')
+            item = popups.edit_string(event_context.window_context, self.get_selected_item(), title='Clone')
             item = self.format_item(item)
             if not item:
                 return
@@ -226,24 +228,24 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
                 return
             self.items.append(item)
             self.select_item(item)
-            self.push(context.window)
+            self.push(event_context.window_context.window)
 
         @self.eventmethod(self.key_rcm('ListboxNone', 'Add'))
         @self.eventmethod(self.keys['Add'])
-        def event_add(context):
-            item = popups.edit_string(context, '', title='Add')
+        def event_add(event_context:EventContext):
+            item = popups.edit_string(event_context.window_context, '', title='Add')
             item = self.format_item(item)
             if not item:
                 return
             if item in self.items:
-                popups.ok(context, '"' + item + '" already exists.')
+                popups.ok(event_context.window_context, '"' + item + '" already exists.')
                 return
             self.items.append(item)
             self.select_item(item)
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['MoveUp'])
-        def event_move_up(context):
+        def event_move_up(event_context:EventContext):
             if self.selected_index == None:
                 return
             index = self.selected_index
@@ -253,10 +255,10 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             self.items[index-1] = self.items[index]
             self.items[index] = temp
             self.selected_index -= 1
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['MoveDown'])
-        def event_move_down(context):
+        def event_move_down(event_context:EventContext):
             if self.selected_index == None:
                 return
             index = self.selected_index
@@ -266,27 +268,27 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             self.items[index+1] = self.items[index]
             self.items[index] = temp
             self.selected_index += 1
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['MoveToTop'])
-        def event_move_to_top(context):
+        def event_move_to_top(event_context:EventContext):
             if self.selected_index == None:
                 return
             item = self.get_selected_item()
             self.items.pop(self.selected_index)
             self.items.insert(0, item)
             self.selected_index = 0
-            self.push(context.window)
+            self.push(event_context.window_context.window)
         
         @self.eventmethod(self.keys['MoveToBottom'])
-        def event_move_to_bottom(context):
+        def event_move_to_bottom(event_context:EventContext):
             if self.selected_index == None:
                 return
             item = self.get_selected_item()
             self.items.pop(self.selected_index)
             self.items.append(item)
             self.selected_index = len(self.items) - 1
-            self.push(context.window)
+            self.push(event_context.window_context.window)
 
     # Other
 
