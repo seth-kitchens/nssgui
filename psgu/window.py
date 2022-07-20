@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 import PySimpleGUI as sg
 
 from psgu.style import colors
-from psgu.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
+from psgu.event_handling import NULL_EVENT, EventManager, WRC
+from psgu.event_loop import EventLoop
 from psgu.gui_element import *
 from psgu import sg as psgu_sg
 from psgu.window_context import WindowContext
 
+
 __all__ = [
+    'WindowContext',
     'AbstractWindow',
     'AbstractBlockingWindow',
     'AbstractAsyncWindow',
@@ -112,8 +117,8 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
     def _close_loading_window(cls, window_context):
         """Check for and close any loading windows opened for the class"""
         k = 'LoadingWindow' + cls.__name__
-        if k in window_context.asyncs:
-            window_context.asyncs[k].close(window_context)
+        if k in window_context.async_windows:
+            window_context.async_windows[k].close(window_context)
     
     def status_bar(self, ge):
         """Links a ge element to the update_status() function.
@@ -140,7 +145,7 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
         if secs != None:
             def func(event_context):
                 status_bar.update_status(
-                    event_context.window_context.window, replace_text,
+                    event_context.window, replace_text,
                     text_color=replace_text_color)
             self.event_after(func, secs)
     
@@ -149,8 +154,11 @@ class AbstractWindow(EventManager, GuiElementLayoutManager):
     
     def get_ge(self, object_id) -> GuiElement | None:
         return self.gem.get_ge(object_id)
+    
+    def get_window(self):
+        return self.window
 
-class AbstractBlockingWindow(AbstractWindow):
+class AbstractBlockingWindow(AbstractWindow, WindowContext.iBlockingWindow):
     """
     Make a subclass of this, implementing:\n
         - __init__()\n
@@ -170,9 +178,9 @@ class AbstractBlockingWindow(AbstractWindow):
         super().__init__(title=title, data=data)
         self.focus_type = focus_type
     
-    def open(self, window_context:WindowContext=None):
+    def open(self, window_context:WindowContext|None=None):
         """Open a blocking window. Returns after closing."""
-        window_context = window_context if window_context != None else WindowContext()
+        window_context = WindowContext.from_any(window_context)
         layout = self.get_layout()
         if self.focus_type == self.focus_types.HIDE_PREV:
             window_context.hide()
@@ -192,7 +200,7 @@ class AbstractBlockingWindow(AbstractWindow):
         # save if successful
         if rv.check_success():
             if event_loop.final_event_context is not None:
-                self.pull(event_loop.final_event_context)
+                self.pull(event_loop.final_event_context.values)
             self.save(self.data)
         window_context.pop()
 
@@ -203,7 +211,7 @@ class AbstractBlockingWindow(AbstractWindow):
         window_context.focus()
         return rv
 
-class AbstractAsyncWindow(AbstractWindow):
+class AbstractAsyncWindow(AbstractWindow, WindowContext.iAsyncWindow):
 
     class focus_types:
         STEAL = 'steal'
@@ -253,6 +261,9 @@ class AbstractAsyncWindow(AbstractWindow):
 
     def key(self, key):
         return self.keys[key]
+    
+    def get_window_id(self):
+        return self.window_id
 
 class ProgressWindow(AbstractAsyncWindow):
     

@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 from psgu.style import colors
 from psgu.gui_element import *
 from psgu.ge.containers.list_container import ListContainer
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 # Show the contained list as a string
@@ -79,12 +79,12 @@ class StringContainer(GuiElement.iRow, ListContainer):
             path = event_context.values[self.keys['Add']]
             if path:
                 self.contained.add_item(path)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['In'])
         def event_in(event_context:EventContext):
             self.pull(event_context.values)
-            self.push_validity(event_context.window_context.window)
+            self.push_validity(event_context.window)
 
     # Other
     

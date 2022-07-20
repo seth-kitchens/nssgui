@@ -6,9 +6,11 @@ from typing import Any, Iterable
 import PySimpleGUI as sg
 
 from psgu.style import colors
-from psgu.event_handling import NULL_EVENT, EventManager, EventLoop, WRC
+from psgu.event_handling import NULL_EVENT, EventManager, WRC
+from psgu.event_loop import EventLoop
+from psgu.event_context import EventContext
 from psgu import sg as psgu_sg
-from psgu.window import WindowContext
+from psgu.window_context import WindowContext
 
 
 __all__ = [
@@ -111,7 +113,8 @@ class Popup(EventManager):
         self.pe(PopupElement.ge_row(cls, key, args=args, **kwargs))
         return self
 
-    def open(self, window_context:WindowContext) -> WRC:
+    def open(self, window_context:WindowContext|None=None) -> WRC:
+        window_context = window_context.from_any(window_context)
         window_context.disable()
         self.event_value_close(sg.WIN_CLOSED)
         self.event_value_close_success(*self.true_events)
@@ -128,11 +131,11 @@ class Popup(EventManager):
             window_context.data['self'] = self
             
             @event_loop.updatecallback
-            def uf(window_context:WindowContext):
-                popup = window_context.data['self']
-                secs_passed = window_context.data['time']
+            def uf(event_context:EventContext):
+                popup = event_context.data['self']
+                secs_passed = event_context.data['time']
                 secs_left = popup.auto_ok_secs - secs_passed
-                popup.update_auto_ok(window_context.window, secs_left)
+                popup.update_auto_ok(event_context.window, secs_left)
                 if secs_left < -0.2:
                     return WRC.close()
                 return WRC.none()
@@ -313,7 +316,7 @@ class PopupBuilder:
             self.popup.sge(sg.Push)
         return self.popup
 
-    def open(self, window_context:WindowContext):
+    def open(self, window_context:WindowContext|None=None):
         """
         Finalizer. Opens popup window, then returns rv from event
         (non-None that closed window) and values
@@ -325,53 +328,46 @@ class PopupBuilder:
 
     def get_layout(self):
         return self.popup.get_layout()
-    
-    # Templates
-    
-    class T:
-        def error():
-            return PopupBuilder() \
-                .title('Error') \
-                .header('Error', colors.error) \
-                .ok()
-
-        def warning():
-            return PopupBuilder() \
-                .title('Warning') \
-                .header('Warning', colors.warning) \
-                .ok() \
-                .cancel()
 
 
 class popups:
 
-    def ok(window_context:WindowContext, text:str|Iterable|None, title=''):
+    def ok(window_context:WindowContext|None, text:str|Iterable|None, title=''):
         return PopupBuilder() \
             .ok() \
             .title(title) \
             .text(text) \
             .open(window_context)
     
-    def confirm(window_context:WindowContext, text:str|Iterable|None, title='Confirm'):
-        return PopupBuilder() \
+    def confirm(window_context:WindowContext|None, text:str|Iterable|None, title='Confirm'):
+        wrc = PopupBuilder() \
             .ok() \
             .cancel() \
             .title(title) \
             .text(text) \
             .open(window_context)
+        return wrc.check_success()
     
-    def error(window_context:WindowContext, text:str|Iterable|None):
-        return PopupBuilder.T.error() \
+    def error(window_context:WindowContext|None, text:str|Iterable|None):
+        return PopupBuilder() \
+            .title('Error') \
+            .header('Error', colors.error) \
+            .ok() \
             .text(text) \
             .open(window_context)
     
-    def warning(window_context:WindowContext, text:str|Iterable|None):
-        return PopupBuilder.T.warning() \
+    def warning(window_context:WindowContext|None, text:str|Iterable|None):
+        wrc = PopupBuilder() \
+            .title('Warning') \
+            .header('Warning', colors.warning) \
+            .ok() \
+            .cancel() \
             .text(text) \
             .open(window_context)
+        return wrc.check_success()
     
     def edit_string(
-            window_context,
+            window_context:WindowContext|None,
             s,
             label=None,
             title='',
@@ -388,11 +384,11 @@ class popups:
         pb.pe(
             PopupElement.sge(sg.Input, default_text=in_text, key='In')
         ).init_focus('In')
-        rv = pb.open(window_context)
+        wrc = pb.open(window_context)
         values = pb.final_event_context.values
-        return values['In'] if rv.check_success() else s
+        return values['In'] if wrc.check_success() else s
     
-    def choose(window_context, text:str|Iterable|None, options:Iterable|dict, title='', **button_kwargs):
+    def choose(window_context:WindowContext|None, text:str|Iterable|None, options:Iterable|dict, title='', **button_kwargs):
         pb = PopupBuilder().title(title).text(text)
         if 'size' not in button_kwargs and 's' not in button_kwargs:
             button_kwargs['size'] = 10
@@ -408,11 +404,11 @@ class popups:
                 pb.pe(pe)
                 pb.event_save_close(text)
         pb.pe(PopupElement.sge(sg.Push))
-        rv = pb.open(window_context)
+        wrc = pb.open(window_context)
         event = pb.final_event_context.event
-        return event if rv.check_success() else None
+        return event if wrc.check_success() else None
 
-    def ok_multiline(window_context, text:str|Any, size=(120, 20)):
+    def ok_multiline(window_context:WindowContext|None, text:str|Any, size=(120, 20)):
         """
         Converts `text` to str then displays it in a large multiline.
         Good for debugging.

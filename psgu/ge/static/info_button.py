@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 from psgu import sg as psgu_sg
 from psgu.gui_element import *
 from psgu.popup import *
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 

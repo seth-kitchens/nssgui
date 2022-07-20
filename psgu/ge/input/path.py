@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 
 from psgu.style import colors
 from psgu.gui_element import *
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 class Path(GuiElement.iRow, GuiElement):

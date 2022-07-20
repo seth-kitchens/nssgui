@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 from psgu.event_handling import WRC
 from psgu.window import AbstractBlockingWindow
 from psgu.gui_element import *
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 class ListContainer(GuiElementContainer, ABC):
@@ -57,4 +57,4 @@ class ListContainer(GuiElementContainer, ABC):
             if not rv.check_success():
                 return
             self.load(window_edit.get_data())
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)

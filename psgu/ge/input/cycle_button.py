@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
 from psgu.gui_element import *
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 __all__ = ['CycleButton']
@@ -86,7 +86,7 @@ class CycleButton(GuiElement.iRow, GuiElement):
         @self.eventmethod(self.keys['Button'])
         def event_button(event_context:EventContext):
             self.cycle()
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
 
     # Other
     

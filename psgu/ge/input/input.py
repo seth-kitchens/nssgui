@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 
 from psgu.style import colors
 from psgu.gui_element import *
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 class Input(GuiElement.iRow, GuiElement):
@@ -84,7 +84,7 @@ class Input(GuiElement.iRow, GuiElement):
         @self.eventmethod(self.keys['In'])
         def event_in(event_context:EventContext):
             self.pull(event_context.values)
-            self.push_validity(event_context.window_context.window)
+            self.push_validity(event_context.window)
     
     # Other
 

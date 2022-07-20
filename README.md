@@ -159,6 +159,10 @@ These are essential to using `GuiElement` objects. Objects communicate to a sg.W
     - `define_events()`
     - `define_menus()`
 
+4. (Optional) Expose sg element kwargs with [sg kwargs methods](#subclassing-ge-sg-element-kwargs)
+
+5. (Optional) Create methods to interact with the GE elsewhere, such as an update function
+
 &nbsp;
 
 ### Subclassing GE: Initialization
@@ -211,9 +215,9 @@ GuiElements can be used within a GuiElement's layout. `GuiElement` inherits `Gui
 
 ### Subclassing GE: Contained GuiElements
 
-Subclass GuiElementContainer instead of GuiElement directly, passing the contained elements(s) to its `__init__()` method.
+Subclass `GuiElementContainer` instead of `GuiElement` directly, passing the contained elements(s) to its `__init__()` method.
 
-Unlike regular nested elements, contained elements are defined outside the class and passed to it. This has not been very thoroughly developed at the time or writing, but for an example you may check the abstract base class `ListContainer`, the subclass containers `StringContainer` and `CountContainer`, and the containable GuiElements `TextList` and `DetailList`.
+Unlike regular nested elements, contained elements are defined outside the class and passed to it. This has not been very thoroughly developed at the time of writing, but for an example you may check the abstract class `ListContainer`, the subclass containers `StringContainer` and `CountContainer`, and the containable GuiElements `TextList` and `DetailList`.
 
 GuiElementContainer:
 - Stores the contained element(s) in self.contained

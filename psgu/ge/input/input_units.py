@@ -5,7 +5,7 @@ from psgu.style import colors
 from psgu.gui_element import *
 from psgu import g as psgu_g
 from psgu import ge as psgu_el
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 class InputUnits(GuiElement.iRow, GuiElement):
@@ -107,12 +107,12 @@ class InputUnits(GuiElement.iRow, GuiElement):
                 self.unit_value.convert_to_degree(degree_name)
             else:
                 self.reset(degree_name)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['In'])
         def event_in(event_context:EventContext):
             self.pull(event_context.values)
-            self.push_validity(event_context.window_context.window)
+            self.push_validity(event_context.window)
 
     # Other
 

@@ -4,7 +4,8 @@ import re
 
 import PySimpleGUI as sg
 
-from psgu.event_handling import WRC, EventContext
+from psgu.event_handling import WRC
+from psgu.event_context import EventContext
 from psgu.gui_element import *
 from psgu.popup import popups
 from psgu.data.ordered_dict import OrderedDict
@@ -172,7 +173,7 @@ class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
         
         @self.eventmethod(self.keys['Listbox'])
         def event_listbox(event_context:EventContext):
-            window = event_context.window_context.window
+            window = event_context.window
             sge_listbox = window[self.keys['Listbox']]
             is_double_click = False
             if not sge_listbox.is_right_click():
@@ -187,12 +188,12 @@ class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
                 return
             self.selection = selections[0]
             self.update_details(window)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Deselect'))
         def event_deselect(event_context:EventContext):
             self.selection = None
-            window = event_context.window_context.window
+            window = event_context.window
             self.update_details(window)
             self.push(window)
         
@@ -207,27 +208,27 @@ class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
             if not rv.success():
                 return
             self.item_dict[item] = data
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Rename'))
         @self.eventmethod(self.keys['Rename'])
         def event_rename(event_context:EventContext):
             if not self.selection:
                 return
-            item = popups.edit_string(event_context, '', 
+            item = popups.edit_string(event_context.window_context, '', 
                 title='Rename', body_text=['Previous: "' + self.selection + '"'])
             item = item.lstrip(self.lstrip).rstrip(self.rstrip)
             if not item:
                 return
             item_data = self.item_dict[self.selection]
             if item in self.item_dict.key_list:
-                if not popups.confirm(event_context, 'Overwrite existing entry "' + item + '" ?'):
+                if not popups.confirm(event_context.window_context, 'Overwrite existing entry "' + item + '" ?'):
                     return
             index = self.item_dict.index(self.selection)
             self.item_dict.remove(self.selection)
             self.item_dict.insert(index, item, item_data)
             self.selection = item
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Remove'))
         @self.eventmethod(self.keys['Remove'])
@@ -236,7 +237,7 @@ class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
                 return
             self.item_dict.remove(self.selection)
             self.selection = None
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Clone'))
         @self.eventmethod(self.keys['Clone'])
@@ -246,12 +247,12 @@ class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
             item = clone_string_unique(self.selection, self.item_dict.key_list)
             data = copy.deepcopy(self.item_dict[self.selection])
             self.item_dict.insert_after_key(self.selection, item, data)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxNone', 'Add'))
         @self.eventmethod(self.keys['Add'])
         def event_add(event_context:EventContext):
-            item = popups.edit_string(event_context, '', label='Name:', title='Add')
+            item = popups.edit_string(event_context.window_context, '', label='Name:', title='Add')
             item = item.lstrip(self.lstrip).rstrip(self.rstrip)
             if not item:
                 return
@@ -265,7 +266,7 @@ class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
                 return rv
             self.item_dict[item] = data
             self.selection = item
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
             return rv
         
         @self.eventmethod(self.keys['RemoveAll'])
@@ -276,35 +277,35 @@ class DetailList(GuiElement.iLayout, GuiElement, GuiElement.iLength, ABC):
                 return
             self.item_dict.clear()
             self.selection = None
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveUp'])
         def event_move_up(event_context:EventContext):
             if not self.selection:
                 return
             self.item_dict.move_forward(self.selection)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveDown'])
         def event_move_down(event_context:EventContext):
             if not self.selection:
                 return
             self.item_dict.move_back(self.selection)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveToTop'])
         def event_move_to_top(event_context:EventContext):
             if not self.selection:
                 return
             self.item_dict.move_to_front(self.selection)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveToBottom'])
         def event_move_to_bottom(event_context:EventContext):
             if not self.selection:
                 return
             self.item_dict.move_to_back(self.selection)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
 
     # Other
 

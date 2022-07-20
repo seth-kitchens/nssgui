@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 from psgu.gui_element import *
 from psgu.popup import popups
 from psgu.sg import wrapped as sg_wrapped
-from psgu.event_handling import EventContext
+from psgu.event_context import EventContext
 
 
 __all__ = ['TextList']
@@ -148,7 +148,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
         
         @self.eventmethod(self.keys['Listbox'])
         def event_listbox(event_context:EventContext):
-            window = event_context.window_context.window
+            window = event_context.window
             sge_listbox = window[self.keys['Listbox']]
             is_double_click = False
             if not sge_listbox.is_right_click():
@@ -156,7 +156,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
                     is_double_click = True
             if not self.items:
                 self.deselect()
-                self.push(event_context.window_context.window)
+                self.push(event_context.window)
                 return
             if is_double_click:
                 event_context.event = self.key_rcm('ListboxItem', 'Edit')
@@ -164,7 +164,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             selections = window[self.keys['Listbox']].get_indexes()
             if len(selections):
                 self.selected_index = selections[0]
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
     
         @self.eventmethod(self.key_rcm('ListboxItem', 'Edit'))
         @self.eventmethod(self.keys['Edit'])
@@ -183,7 +183,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
                     return
                 self.items.remove(item)
                 self.selected_index = None
-                self.push(event_context.window_context.window)
+                self.push(event_context.window)
                 return
             new_item = self.format_item(new_item)
             if new_item == '':
@@ -194,7 +194,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             else:
                 self.items[self.selected_index] = new_item
                 self.select_item(new_item)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Remove'))
         @self.eventmethod(self.keys['Remove'])
@@ -203,7 +203,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
                 return
             self.items.pop(self.selected_index)
             self.deselect()
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['RemoveAll'])
         def event_remove_all(event_context:EventContext):
@@ -213,7 +213,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
                 return
             self.items.clear()
             self.deselect()
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.key_rcm('ListboxItem', 'Clone'))
         @self.eventmethod(self.keys['Clone'])
@@ -228,7 +228,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
                 return
             self.items.append(item)
             self.select_item(item)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
 
         @self.eventmethod(self.key_rcm('ListboxNone', 'Add'))
         @self.eventmethod(self.keys['Add'])
@@ -242,7 +242,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
                 return
             self.items.append(item)
             self.select_item(item)
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveUp'])
         def event_move_up(event_context:EventContext):
@@ -255,7 +255,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             self.items[index-1] = self.items[index]
             self.items[index] = temp
             self.selected_index -= 1
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveDown'])
         def event_move_down(event_context:EventContext):
@@ -268,7 +268,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             self.items[index+1] = self.items[index]
             self.items[index] = temp
             self.selected_index += 1
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveToTop'])
         def event_move_to_top(event_context:EventContext):
@@ -278,7 +278,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             self.items.pop(self.selected_index)
             self.items.insert(0, item)
             self.selected_index = 0
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
         
         @self.eventmethod(self.keys['MoveToBottom'])
         def event_move_to_bottom(event_context:EventContext):
@@ -288,7 +288,7 @@ class TextList(GuiElement.iLayout, GuiElement, GuiElement.iLength, GuiElement.iS
             self.items.pop(self.selected_index)
             self.items.append(item)
             self.selected_index = len(self.items) - 1
-            self.push(event_context.window_context.window)
+            self.push(event_context.window)
 
     # Other
 

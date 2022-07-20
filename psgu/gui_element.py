@@ -150,6 +150,17 @@ class GuiElementManager(GuiElementLayoutManager):
         return key
 
 class GuiElement(EventManager, GuiElementLayoutManager):
+    """
+    ## GuiElement
+    
+    A logical gui element in a window, comprising of one or more PySimpleGUi elements. 
+    This is the most fundamental class in psgu. 
+
+    Temporarily, all major concepts are detailed in README.md, including subclassing
+    this class.
+
+    [Subclassing Guide](https://github.com/seth-kitchens/psg-unsimplified/blob/main/README.md#subclassing-guielement)
+    """
 
     class iLength(ABC):
         """GuiElement data can be measured with len()"""
@@ -224,15 +235,6 @@ class GuiElement(EventManager, GuiElementLayoutManager):
         LAYOUT = 'layout'
 
     def __init__(self, object_id) -> None:
-        """
-        # GuiElement
-        
-        A logical gui element in a window, comprising of one or more PySimpleGUi elements. 
-        This is the most fundamental class in psgu. 
-
-        Temporarily, all major concepts are detailed in README.md, including subclassing
-        this class.
-        """
         super().__init__(debug_id='GE:' + object_id)
         if not (issubclass(self.__class__, GuiElement.iSge)
             or  issubclass(self.__class__, GuiElement.iRow)
@@ -506,7 +508,7 @@ class GuiElement(EventManager, GuiElementLayoutManager):
     Alias for check_double_click() for more clearly showing that
     ignoring the is_double_click rv is intentional
     """
-
+    
 
 class GuiElementContainer(GuiElement):
     def __init__(self, contained:GuiElement|Iterable[GuiElement]):
